@@ -327,43 +327,24 @@
 <script>
 (() => {
   /* ===== 核心配置 ===== */
-  // 1. 扩充颜色池到 14 种，以支持 Level 25+ 的高难度
   const COLOR_POOL = [
-    {name:"红", hex:"#ef4444"},
-    {name:"橙", hex:"#f97316"},
-    {name:"黄", hex:"#fde047"},
-    {name:"绿", hex:"#16a34a"},
-    {name:"青", hex:"#22d3ee"},
-    {name:"蓝", hex:"#1d4ed8"},
-    {name:"紫", hex:"#a855f7"},
-    {name:"粉", hex:"#fb7185"},
-    {name:"棕", hex:"#5b341a"},
-    // 新增颜色
-    {name:"灰", hex:"#9ca3af"},
-    {name:"酸橙", hex:"#84cc16"},
-    {name:"靛青", hex:"#4338ca"},
-    {name:"玫瑰", hex:"#e11d48"},
-    {name:"墨绿", hex:"#14532d"}
+    {name:"红", hex:"#ef4444"}, {name:"橙", hex:"#f97316"}, {name:"黄", hex:"#fde047"},
+    {name:"绿", hex:"#16a34a"}, {name:"青", hex:"#22d3ee"}, {name:"蓝", hex:"#1d4ed8"},
+    {name:"紫", hex:"#a855f7"}, {name:"粉", hex:"#fb7185"}, {name:"棕", hex:"#5b341a"},
+    {name:"灰", hex:"#9ca3af"}, {name:"酸橙", hex:"#84cc16"}, {name:"靛青", hex:"#4338ca"},
+    {name:"玫瑰", hex:"#e11d48"}, {name:"墨绿", hex:"#14532d"}
   ];
 
-  /* ===== 状态管理 (带 LocalStorage) ===== */
   const STORAGE_KEY = 'gummy_match_save_v1';
   
   function loadProgress() {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? parseInt(saved, 10) : 1;
   }
+  function saveProgress(lvl) { localStorage.setItem(STORAGE_KEY, lvl); }
+  function clearProgress() { localStorage.removeItem(STORAGE_KEY); location.reload(); }
 
-  function saveProgress(lvl) {
-    localStorage.setItem(STORAGE_KEY, lvl);
-  }
-
-  function clearProgress() {
-    localStorage.removeItem(STORAGE_KEY);
-    location.reload();
-  }
-
-  let level = loadProgress(); // 初始加载进度
+  let level = loadProgress();
   let pairCount = 3;
   let ids = [];
   let correctSeq = [];
@@ -371,7 +352,6 @@
   let activeRowIndex = 0;
   let soundOn = false;
 
-  /* ===== DOM 元素 ===== */
   const elLevel = document.getElementById("level");
   const elPairs = document.getElementById("pairs");
   const elAttempts = document.getElementById("attempts");
@@ -380,147 +360,88 @@
   const btnFullReset = document.getElementById("fullReset");
   const rootStyle = document.documentElement.style;
 
-  /* ===== 声音系统 ===== */
+  /* 音频 */
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
-  
-  bgSoda.src = "soda.mp3";
-  sfxPop.src = "pop.mp3";
-  sfxCorrect.src = "correct.mp3";
+  bgSoda.src = "soda.mp3"; sfxPop.src = "pop.mp3"; sfxCorrect.src = "correct.mp3";
   
   const soundBtn = document.getElementById("soundBtn");
-  
   soundBtn.addEventListener("click", () => {
     soundOn = !soundOn;
     soundBtn.textContent = soundOn ? "🔊" : "🔇";
-    if(soundOn) {
-        bgSoda.volume = 0.2;
-        bgSoda.play().catch(()=>{});
-    } else {
-        bgSoda.pause();
-    }
+    if(soundOn) { bgSoda.volume = 0.2; bgSoda.play().catch(()=>{}); } else { bgSoda.pause(); }
   });
+  function playOne(audio){ if(soundOn){ audio.currentTime=0; audio.play().catch(()=>{}); } }
 
-  function playOne(audio){
-    if(!soundOn) return;
-    audio.currentTime=0; 
-    audio.play().catch(()=>{});
-  }
-
-  /* ===== 自适应布局核心 ===== */
-  // 根据屏幕宽度和色块数量，动态调整杯子大小
+  /* 屏幕适配 */
   function adjustLayoutSize() {
     const screenW = window.innerWidth;
-    const padding = 32; // 左右预留间隙
-    const gap = 6;      // 格子间隙
-    
-    // 计算公式：可用宽度 / 数量 - 间隙
-    // 最大 90px，最小 28px (防止太小看不清)
+    const padding = 20; 
+    const gap = 4;
     let size = (screenW - padding - (gap * (pairCount - 1))) / pairCount;
-    size = Math.min(90, Math.max(28, size));
-    
+    size = Math.min(80, Math.max(32, size)); // 限制最大最小尺寸
     rootStyle.setProperty('--cup-sz', `${size}px`);
-    
-    // 动态调整糖果内边距，越小越满
     if (size < 40) {
-        rootStyle.setProperty('--candy-w', '92%');
-        rootStyle.setProperty('--candy-h', '75%');
+        rootStyle.setProperty('--candy-w', '92%'); rootStyle.setProperty('--candy-h', '75%');
     } else {
-        rootStyle.setProperty('--candy-w', '86%');
-        rootStyle.setProperty('--candy-h', '68%');
+        rootStyle.setProperty('--candy-w', '86%'); rootStyle.setProperty('--candy-h', '68%');
     }
   }
-  
   window.addEventListener('resize', adjustLayoutSize);
 
-  /* ===== 游戏逻辑 ===== */
+  /* 游戏逻辑 */
   const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
 
   function pairsForLevel(lvl){
-    // 难度曲线调整
     if (lvl <= 25) {
         if (lvl === 1) return 3;
         const base = 4 + Math.floor((lvl - 2) / 3);
-        return Math.min(base, 9); // 25关之前最多9个
+        return Math.min(base, 9);
     } else {
-        // 25关之后：9 到 14 个随机
         return Math.floor(Math.random() * (14 - 9 + 1)) + 9;
     }
   }
 
   function setupLevel(){
     pairCount = pairsForLevel(level);
-    adjustLayoutSize(); // 每次开局重新计算尺寸适配
-
-    // 从颜色池中取前 pairCount 个颜色并打乱作为答案
+    adjustLayoutSize();
     const allIndices = COLOR_POOL.map((_,i)=>i);
-    // 如果需要的颜色超过池子大小(虽然现在够了)，做个保护
     const poolSize = Math.min(pairCount, COLOR_POOL.length);
-    
     ids = shuffle(allIndices).slice(0, poolSize);
     correctSeq = shuffle([...ids]);
-
-    attempts = [{
-      guess: Array(pairCount).fill(null),
-      status: "active",
-      residue: Array(pairCount).fill(null),
-    }];
+    attempts = [{ guess: Array(pairCount).fill(null), status: "active", residue: Array(pairCount).fill(null) }];
     activeRowIndex = 0;
     renderAll();
-    
-    // 滚动到底部
-    setTimeout(() => {
-        elAttempts.scrollTop = elAttempts.scrollHeight;
-    }, 50);
+    setTimeout(() => { elAttempts.scrollTop = elAttempts.scrollHeight; }, 50);
   }
 
   function placeColor(rowIdx, cupIdx, colorId){
     const row = attempts[rowIdx];
     if (!row || row.status !== "active") return;
-
-    // 如果这个颜色已经在别处用了，清除原来的
     const prevPos = row.guess.findIndex(v => v === colorId);
-    if (prevPos !== -1 && prevPos !== cupIdx){
-      row.guess[prevPos] = null;
-    }
+    if (prevPos !== -1 && prevPos !== cupIdx) row.guess[prevPos] = null;
     row.guess[cupIdx] = colorId;
-
     renderAll();
 
-    // 检查是否填满
     if (row.guess.every(v => v !== null)){
       const marks = row.guess.map((id, i) => id === correctSeq[i]);
       const allRight = marks.every(Boolean);
-
       row.marks = marks;
       row.status = allRight ? "ok" : "bad";
-
       if (row.status === "bad"){
-        // 记录错误残留颜色
         row.stains = marks.map((ok, i) => ok ? "" : COLOR_POOL[row.guess[i]].hex);
         row.residue = row.residue.map((old, i) => marks[i] ? old : COLOR_POOL[row.guess[i]].hex);
-        row.burstDone = false;
-        row.wrongGone = marks.map(() => false);
+        row.burstDone = false; row.wrongGone = marks.map(() => false);
       }
-
       renderAll();
-
       if (allRight){
         playOne(sfxCorrect);
-        setTimeout(() => {
-          level++;
-          saveProgress(level); // 保存进度！
-          setupLevel();
-        }, 800);
+        setTimeout(() => { level++; saveProgress(level); setupLevel(); }, 800);
       } else {
         playOne(sfxPop);
         setTimeout(() => {
-          attempts.push({
-            guess: Array(pairCount).fill(null),
-            status: "active",
-            residue: Array(pairCount).fill(null),
-          });
+          attempts.push({ guess: Array(pairCount).fill(null), status: "active", residue: Array(pairCount).fill(null) });
           activeRowIndex = attempts.length - 1;
           renderAll();
           elAttempts.scrollTop = elAttempts.scrollHeight;
@@ -529,7 +450,6 @@
     }
   }
 
-  /* ===== 渲染逻辑 ===== */
   function makeCandyDiv(colorId, { inCup = false } = {}) {
     const c = COLOR_POOL[colorId];
     const d = document.createElement("div");
@@ -541,19 +461,14 @@
       d.classList.add("cupCandy");
     } else {
       d.classList.add("paletteCandy");
-      // 拖拽逻辑
+      // PC 端拖拽
       d.draggable = true;
       d.addEventListener("dragstart", (e) => {
         draggingColorId = colorId;
         e.dataTransfer.setData("text/plain", String(colorId));
       });
-      // 触摸逻辑在全局处理
-      d.addEventListener("touchstart", (e) => {
-         e.preventDefault();
-         draggingColorId = colorId;
-         const t = e.touches[0];
-         draggingTouch = { id: t.identifier, x: t.clientX, y: t.clientY };
-      }, {passive:false});
+      // 移动端触摸 - 关键修复
+      d.addEventListener("touchstart", (e) => handleTouchStart(e, d, colorId), {passive: false});
     }
     return d;
   }
@@ -562,7 +477,6 @@
     elPalette.innerHTML = "";
     const active = attempts[activeRowIndex];
     const usedSet = new Set((active?.guess ?? []).filter(v => v !== null));
-
     ids.forEach(colorId => {
       const item = document.createElement("div");
       item.className = "paletteItem";
@@ -578,10 +492,8 @@
     attempts.forEach((row, idx) => {
       const card = document.createElement("div");
       card.className = "rowCard" + (idx === activeRowIndex ? " active" : "");
-      
       const slots = document.createElement("div");
       slots.className = "slots";
-      // 传递 CSS 变量给 slots，虽然我们在 adjustLayoutSize 全局设了，但这里为了语义
       slots.style.setProperty('--count', pairCount);
 
       for (let s=0; s<pairCount; s++){
@@ -589,60 +501,41 @@
         cup.className = "cup";
         cup.dataset.row = idx;
         cup.dataset.slot = s;
-
-        // 残留
         if (row.residue[s]){
           const r = document.createElement("div");
           r.className = "residue";
           r.style.setProperty("--residue", row.residue[s]);
           cup.appendChild(r);
         }
-
-        // 交互事件
         if (row.status === "active"){
           cup.addEventListener("dragover", e => { e.preventDefault(); cup.classList.add("dropHover"); });
           cup.addEventListener("dragleave", () => cup.classList.remove("dropHover"));
           cup.addEventListener("drop", (e) => {
-            e.preventDefault();
-            cup.classList.remove("dropHover");
+            e.preventDefault(); cup.classList.remove("dropHover");
             const cid = e.dataTransfer.getData("text/plain");
             if(cid) placeColor(idx, s, Number(cid));
-            else if(draggingColorId !== null) placeColor(idx, s, draggingColorId);
           });
         }
-
-        // 糖果渲染
         const val = row.guess[s];
         const isWrong = row.status === "bad" && row.marks && !row.marks[s];
         const gone = row.wrongGone && row.wrongGone[s];
-
-        if (val !== null && !(isWrong && gone)){
-            cup.appendChild(makeCandyDiv(val, {inCup:true}));
-        }
+        if (val !== null && !(isWrong && gone)) cup.appendChild(makeCandyDiv(val, {inCup:true}));
         slots.appendChild(cup);
       }
-      
       card.appendChild(slots);
       elAttempts.appendChild(card);
 
-      // 爆炸特效逻辑
       if (row.status === "bad" && !row.burstDone){
-        setTimeout(() => { // 延迟一点让 DOM 渲染完
+        setTimeout(() => {
             const cupEls = slots.querySelectorAll(".cup");
             row.marks.forEach((ok, i) => {
                 if(!ok){
-                    const hex = row.stains[i];
-                    addSplat(cupEls[i], hex);
+                    addSplat(cupEls[i], row.stains[i]);
                     const candy = cupEls[i].querySelector(".cupCandy");
                     if(candy) {
                         candy.classList.add("pop");
-                        setTimeout(() => {
-                            row.wrongGone[i] = true;
-                            renderAll();
-                        }, 260);
-                    } else {
-                         row.wrongGone[i] = true;
-                    }
+                        setTimeout(() => { row.wrongGone[i] = true; renderAll(); }, 260);
+                    } else { row.wrongGone[i] = true; }
                 }
             });
             row.burstDone = true;
@@ -652,64 +545,98 @@
   }
 
   function renderAll(){
-    elLevel.textContent = level;
-    elPairs.textContent = pairCount;
-    renderPalette();
-    renderAttempts();
+    elLevel.textContent = level; elPairs.textContent = pairCount;
+    renderPalette(); renderAttempts();
   }
 
-  /* ===== 特效工具函数 ===== */
   function addSplat(parent, hex){
     const s = document.createElement("div");
-    s.className = "splat";
-    s.style.setProperty("--splat", hex);
-    s.style.setProperty("--rot", (Math.random()*20-10)+"deg");
+    s.className = "splat"; s.style.setProperty("--splat", hex); s.style.setProperty("--rot", (Math.random()*20-10)+"deg");
     parent.appendChild(s);
-    
-    // 增加滴落效果
     for(let k=0;k<2;k++){
        const d = document.createElement("div");
-       d.className="drip";
-       d.style.setProperty("--splat", hex);
-       d.style.left = (20+Math.random()*60)+"%";
-       d.style.top = (50+Math.random()*20)+"%";
+       d.className="drip"; d.style.setProperty("--splat", hex);
+       d.style.left = (20+Math.random()*60)+"%"; d.style.top = (50+Math.random()*20)+"%";
        parent.appendChild(d);
     }
   }
 
-  /* ===== 全局交互变量 ===== */
-  let draggingColorId = null;
-  let draggingTouch = null;
-  let touchHoverCup = null;
+  /* ===== 核心修复：移动端触摸拖拽逻辑 ===== */
+  let ghostEl = null;
+  let draggingTouchId = null;
+  let activeColorId = null;
+  let hoverCup = null;
 
-  document.addEventListener("touchmove", (e) => {
-    if (!draggingColorId) return;
-    const t = Array.from(e.touches).find(x => x.identifier === draggingTouch.id);
-    if (!t) return;
+  function handleTouchStart(e, originalEl, colorId) {
+    e.preventDefault(); // 防止滚动
+    const touch = e.changedTouches[0];
+    draggingTouchId = touch.identifier;
+    activeColorId = colorId;
+
+    // 1. 创建“分身” (Ghost Element)
+    ghostEl = originalEl.cloneNode(true);
+    ghostEl.classList.add('drag-ghost');
     
-    e.preventDefault(); // 阻止滚动
-    const el = document.elementFromPoint(t.clientX, t.clientY);
-    const cup = el ? el.closest(".cup") : null;
+    // 2. 设置分身初始位置
+    updateGhostPosition(touch.clientX, touch.clientY);
+    document.body.appendChild(ghostEl);
+  }
 
-    if (touchHoverCup && touchHoverCup !== cup) touchHoverCup.classList.remove("dropHover");
-    if (cup) cup.classList.add("dropHover");
-    touchHoverCup = cup;
-  }, {passive:false});
-
-  document.addEventListener("touchend", (e) => {
-    if (!draggingColorId) return;
-    if (touchHoverCup) {
-        touchHoverCup.classList.remove("dropHover");
-        const r = Number(touchHoverCup.dataset.row);
-        const s = Number(touchHoverCup.dataset.slot);
-        if(!isNaN(r)) placeColor(r, s, draggingColorId);
-        touchHoverCup = null;
+  function updateGhostPosition(x, y) {
+    if(ghostEl) {
+        ghostEl.style.left = x + 'px';
+        ghostEl.style.top = y + 'px';
     }
-    draggingColorId = null;
-    draggingTouch = null;
-  }, {passive:false});
+  }
 
-  /* ===== 背景泡泡 (优化版) ===== */
+  // 全局监听移动
+  document.addEventListener('touchmove', (e) => {
+    if (!ghostEl) return;
+    const touch = Array.from(e.changedTouches).find(t => t.identifier === draggingTouchId);
+    if (!touch) return;
+    
+    e.preventDefault(); // 关键：禁止页面跟随手指滚动
+
+    // 更新分身位置
+    updateGhostPosition(touch.clientX, touch.clientY);
+
+    // 检测手指下的元素 (因为 ghost 设置了 pointer-events: none，所以能透传检测到下面的杯子)
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const cup = el ? el.closest('.cup') : null;
+
+    // 高亮杯子反馈
+    if (hoverCup && hoverCup !== cup) hoverCup.classList.remove('dropHover');
+    if (cup) cup.classList.add('dropHover');
+    hoverCup = cup;
+
+  }, { passive: false });
+
+  // 全局监听结束
+  document.addEventListener('touchend', (e) => {
+    if (!ghostEl) return;
+    const touch = Array.from(e.changedTouches).find(t => t.identifier === draggingTouchId);
+    if (!touch) return;
+
+    // 清理分身
+    ghostEl.remove();
+    ghostEl = null;
+    draggingTouchId = null;
+
+    // 如果手指在杯子上松开，则放置
+    if (hoverCup) {
+        hoverCup.classList.remove('dropHover');
+        const r = parseInt(hoverCup.dataset.row);
+        const s = parseInt(hoverCup.dataset.slot);
+        if (!isNaN(r) && activeColorId !== null) {
+            placeColor(r, s, activeColorId);
+        }
+        hoverCup = null;
+    }
+    activeColorId = null;
+  }, { passive: false });
+
+
+  /* 背景泡泡 */
   const bg = document.getElementById("bgBubbles");
   for(let i=0;i<20;i++){
     const b = document.createElement("div");
@@ -724,35 +651,21 @@
     bg.appendChild(b);
   }
 
-  /* ===== 按钮事件 ===== */
   btnResetLevel.addEventListener("click", () => {
-    // 重置本关不改变 level，不保存
-    attempts = [{
-      guess: Array(pairCount).fill(null),
-      status: "active",
-      residue: Array(pairCount).fill(null),
-    }];
-    activeRowIndex = 0;
-    renderAll();
+    attempts = [{ guess: Array(pairCount).fill(null), status: "active", residue: Array(pairCount).fill(null) }];
+    activeRowIndex = 0; renderAll();
   });
-
   btnFullReset.addEventListener("click", () => {
-    if(confirm("确定要清除所有进度从第1关开始吗？")){
-        clearProgress();
-    }
+    if(confirm("确定清档？")){ clearProgress(); }
   });
 
-  // 初始化
   setupLevel();
-
-  // 注册 Service Worker (保持原样)
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js").catch(console.warn);
-    });
+    window.addEventListener("load", () => { navigator.serviceWorker.register("./sw.js").catch(console.warn); });
   }
 
 })();
 </script>
 </body>
 </html>
+
