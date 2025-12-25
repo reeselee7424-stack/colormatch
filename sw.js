@@ -1,25 +1,33 @@
-const CACHE_NAME = "gummy-match-v8"; // 升级版本
+const CACHE_NAME = "gummy-match-v1";
 const ASSETS = [
   "./",
-  "./index.html",
+  "./color-match.html",
   "./manifest.webmanifest",
-  "./icon-152.png", // 确保文件名对应
-  "./icon-192.png", // 确保文件名对应
+  "./icon-192.png",
+  "./icon-512.png",
   "./soda.mp3",
   "./pop.mp3",
-  "./correct.mp3"
+  "./correct.mp3",
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+  );
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => (k === CACHE_NAME ? null : caches.delete(k))))));
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.map((k) => (k === CACHE_NAME ? null : caches.delete(k))))
+    )
+  );
   self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
-  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
+  event.respondWith(
+    caches.match(event.request).then((cached) => cached || fetch(event.request))
+  );
 });
