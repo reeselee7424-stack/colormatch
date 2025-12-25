@@ -1,13 +1,13 @@
-const CACHE_NAME = "gummy-match-v7"; // 升级到 v7
+const CACHE_NAME = "gummy-match-v8"; // 升级版本
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./icon-192.png",
-  "./icon-512.png",
+  "./icon-152.png", // 确保文件名对应
+  "./icon-192.png", // 确保文件名对应
   "./soda.mp3",
   "./pop.mp3",
-  "./rightanswer-95219.mp3"
+  "./correct.mp3"
 ];
 
 self.addEventListener("install", (event) => {
