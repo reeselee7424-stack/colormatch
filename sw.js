@@ -1,4 +1,4 @@
-const CACHE_NAME = "gummy-match-v2";
+const CACHE_NAME = "gummy-match-v3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -7,7 +7,7 @@ const ASSETS = [
   "./icon-512.png",
   "./soda.mp3",
   "./pop.mp3",
-  "./correct.mp3"
+  "./rightawser-95219.mp3"
 ];
 
 self.addEventListener("install", (event) => {
@@ -31,4 +31,5 @@ self.addEventListener("fetch", (event) => {
     caches.match(event.request).then((cached) => cached || fetch(event.request))
   );
 });
+
 
