@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>果汁软糖 - 经典回归版</title>
+  <title>果汁软糖 - 果冻质感版</title>
 
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0f172a">
@@ -15,8 +15,8 @@
   <style>
     :root{
       --text: #e2e8f0;
-      --cup-sz: 56px; 
-      --candy-sz: 46px; 
+      --cup-sz: 58px; 
+      --candy-sz: 48px; 
     }
 
     body{
@@ -24,7 +24,7 @@
       font-family: system-ui,-apple-system,sans-serif;
       color:var(--text); overflow:hidden; overscroll-behavior: none;
       
-      /* 保持你喜欢的深蓝背景 */
+      /* 深蓝背景 */
       background: radial-gradient(circle at 50% 120%, #1e293b 0%, #0f172a 40%, #020617 100%);
     }
 
@@ -72,35 +72,27 @@
     }
     .attempts-scroll::-webkit-scrollbar { display: none; }
 
-    /* ===== 回归 v6 版本的糖果行样式 ===== */
     .row-card{
-      display: flex; justify-content: center; padding: 8px;
-      border-radius: 12px; /* v6 的圆角矩形 */
-      background: rgba(255,255,255,0.03); /* v6 的底色 */
-      border: 1px solid rgba(255,255,255,0.05); /* v6 的边框 */
+      display: flex; justify-content: center; padding: 6px;
+      border-radius: 99px;
       flex-shrink: 0;
       transition: all 0.3s;
     }
     .row-card.active{
-      background: rgba(255,255,255,0.06); /* v6 的高亮底色 */
-      border-color: rgba(255,255,255,0.15); /* v6 的高亮边框 */
-      box-shadow: none; /* v6 没有强烈的光晕 */
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 0 30px rgba(0,0,0,0.2);
     }
 
     .slots{ display:grid; gap: 10px; grid-template-columns: repeat(var(--count), var(--cup-sz)); justify-content: center;}
 
+    /* 杯子 */
     .cup{
       width: var(--cup-sz); height: var(--cup-sz);
       border-radius: 50%; position:relative; 
       border: 1px solid rgba(255,255,255,0.15);
       background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.2) 100%);
       box-shadow: inset 0 2px 4px rgba(255,255,255,0.05), inset 0 -2px 6px rgba(0,0,0,0.3);
-    }
-    .cup::after {
-        content: ""; position: absolute; top: 10%; left: 10%;
-        width: 30%; height: 30%; border-radius: 50%;
-        background: radial-gradient(circle at center, rgba(255,255,255,0.15), transparent 70%);
-        filter: blur(2px);
     }
     .cup.dropHover{ border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); }
 
@@ -112,38 +104,54 @@
       pointer-events: none;
     }
 
+    /* ===== 核心修改：果冻软糖质感 (参考图) ===== */
     .candy{
-      width: var(--candy-sz); height: calc(var(--candy-sz) * 0.9);
-      border-radius: 50%;
+      width: var(--candy-sz); height: calc(var(--candy-sz) * 0.92);
+      /* 形状：方圆/馒头形 */
+      border-radius: 35% 35% 45% 45%; 
       position:absolute; left:50%; top:50%; transform: translate(-50%, -50%); 
       z-index: 10;
-      background: radial-gradient(circle at 40% 30%, rgba(255,255,255,0.3), var(--bg));
+      
+      /* 1. 基础色 + 内部透光 */
+      background: radial-gradient(130% 130% at 30% 20%, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.1) 20%, var(--bg) 60%, rgba(0,0,0,0.3) 100%);
+      
+      /* 2. 边缘厚度感 */
       box-shadow: 
-        inset 0 3px 5px rgba(255,255,255,0.5), 
-        inset 0 -4px 6px rgba(0,0,0,0.4),
-        0 4px 8px rgba(0,0,0,0.3);
+        inset 0 -4px 6px rgba(0,0,0,0.2), /* 底部厚度 */
+        0 4px 8px rgba(0,0,0,0.3); /* 投影 */
+        
       transition: opacity 0.1s, transform 0.1s;
     }
+    
+    /* 3. 强烈的高光 (湿润感) */
     .candy::after{
-      content:""; position:absolute; left: 20%; top: 15%; width: 35%; height: 25%;
+      content:""; position:absolute; left: 15%; top: 15%; width: 35%; height: 25%;
       border-radius: 50%;
-      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.1));
+      background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.2));
       filter: blur(1px);
     }
+    /* 4. 二次高光 */
+    .candy::before{
+      content:""; position:absolute; right: 20%; bottom: 20%; width: 15%; height: 15%;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.4);
+      filter: blur(2px);
+    }
     
+    /* 七彩糖果 */
     .candy[data-rainbow="true"] {
-        background: conic-gradient(red, orange, yellow, green, cyan, blue, violet, red);
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.7), 0 4px 6px rgba(0,0,0,0.3);
+        background: conic-gradient(from 180deg, red, orange, yellow, green, cyan, blue, violet, red);
+        box-shadow: inset 0 0 10px rgba(255,255,255,0.5), 0 4px 8px rgba(0,0,0,0.3);
     }
 
     .candy.fade-out { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
 
+    /* ===== 底部调色盘与“阴影坑” ===== */
     .palette-area {
         background: linear-gradient(to bottom, #1e3a8a, #0f172a);
-        border-top: 1px solid rgba(255,255,255,0.15);
+        border-top: 1px solid rgba(255,255,255,0.1);
         padding: 15px 0 30px 0;
         position: relative;
-        box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
     }
     
     .palette-scroll { 
@@ -151,29 +159,34 @@
         justify-content: center; 
     }
     
+    /* 外层容器：负责显示“阴影/凹槽” */
     .p-item { 
         width: 56px; height: 56px; flex-shrink: 0; 
         display:flex; justify-content:center; align-items:center; 
         position: relative;
-    }
-    
-    .p-item::before {
-        content:""; position: absolute; 
-        width: 50px; height: 44px; 
-        border-radius: 16px; 
-        background: rgba(0,0,0,0.4);
-        box-shadow: inset 0 3px 8px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.05);
+        
+        /* 核心：这里模拟“空槽”的半透明阴影 */
+        border-radius: 35% 35% 45% 45%; /* 形状和糖果一致 */
+        background: rgba(0,0,0,0.25); /* 半透明黑 */
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.4); /* 内陷感 */
     }
 
-    .palette-candy { position: relative; transform: scale(0.95); transition: opacity 0.1s; }
+    .palette-candy { 
+        position: relative; 
+        /* 盖住底下的阴影 */
+        transform: scale(1); 
+    }
+    
+    /* 拖拽时：隐藏源糖果 -> 露出底下的 .p-item 背景 */
     .palette-candy.is-dragging { opacity: 0; }
+    
     .candy.used { filter: grayscale(1) opacity(0.3); }
 
     .drag-ghost {
       position: fixed; pointer-events: none; z-index: 9999;
       width: 50px; height: 46px; opacity: 1;
-      transform: translate(-50%, -50%) scale(1.1);
-      filter: drop-shadow(0 15px 10px rgba(0,0,0,0.4));
+      transform: translate(-50%, -50%) scale(1.15);
+      filter: drop-shadow(0 15px 15px rgba(0,0,0,0.4));
     }
   </style>
 </head>
@@ -209,13 +222,14 @@
 
 <script>
 (() => {
+  /* 颜色池 (15色) */
   const COLORS = [
     { hex: "#ff2e2e" }, { hex: "#ff9f0a" }, { hex: "#ffd60a" }, { hex: "#30d158" },
     { hex: "#22d3ee" }, { hex: "#0a84ff" }, { hex: "#bf5af2" }, { hex: "#ff375f" },
     { hex: "#8d6e63" }, { hex: "#2d3436" }, { hex: "#f1f5f9" }, { hex: "#94a3b8" },
     { hex: "#0abab5" }, { hex: "#008080" }, { hex: "rainbow" }
   ];
-  const KEY_SAVE = 'gummy_v13_save'; // 更新版本号以免混淆
+  const KEY_SAVE = 'gummy_v14_save';
   
   let state = { level: 1, pairCount: 3, colors: [], answer: [], rows: [], activeRow: 0, sound: true };
   
@@ -225,7 +239,7 @@
     correct: document.getElementById('sfx-correct') 
   };
 
-  // 强力解锁音频 (无开局测试，点击即解锁)
+  // 强力解锁：任意交互激活音频
   function unlockAudio() {
     Object.values(audios).forEach(a => {
         a.volume = 0; 
@@ -303,7 +317,7 @@
     let sz = (w - (state.pairCount - 1) * 8) / state.pairCount;
     sz = Math.max(34, Math.min(68, sz));
     document.documentElement.style.setProperty('--cup-sz', sz + 'px');
-    document.documentElement.style.setProperty('--candy-sz', (sz * 0.8) + 'px');
+    document.documentElement.style.setProperty('--candy-sz', (sz * 0.82) + 'px');
     document.documentElement.style.setProperty('--count', state.pairCount);
   }
 
@@ -319,10 +333,13 @@
     
     state.colors.forEach(cIdx => {
         const wrap = document.createElement('div'); wrap.className = 'p-item';
+        
         const c = createCandy(cIdx);
         c.className += ' palette-candy';
+        
         if (used.has(cIdx)) c.classList.add('used');
         c.dataset.cid = cIdx;
+        
         c.addEventListener('touchstart', (e) => handleTouchStart(e, c, cIdx), {passive: false});
         wrap.appendChild(c);
         p.appendChild(wrap);
@@ -383,11 +400,14 @@
     dragId = t.identifier; activeColor = cIdx; sourceEl = el;
     
     sourceEl.classList.add('is-dragging');
+
     ghost = el.cloneNode(true);
     ghost.className = 'candy drag-ghost';
     ghost.classList.remove('is-dragging', 'palette-candy');
+    
     const colorData = COLORS[cIdx];
     if(colorData.hex !== 'rainbow') ghost.style.setProperty('--bg', colorData.hex);
+
     ghost.style.left = t.clientX + 'px'; ghost.style.top = t.clientY + 'px';
     document.body.appendChild(ghost);
   }
@@ -398,6 +418,7 @@
     if (!t) return;
     e.preventDefault();
     ghost.style.left = t.clientX + 'px'; ghost.style.top = t.clientY + 'px';
+    
     const elUnder = document.elementFromPoint(t.clientX, t.clientY);
     const cup = elUnder ? elUnder.closest('.cup') : null;
     if (cup && parseInt(cup.dataset.r) === state.activeRow) {
@@ -410,7 +431,9 @@
 
   const endDrag = (e) => {
     if (!ghost) return;
-    if (hoverCup) handleGuess(parseInt(hoverCup.dataset.r), parseInt(hoverCup.dataset.s), activeColor);
+    if (hoverCup) {
+        handleGuess(parseInt(hoverCup.dataset.r), parseInt(hoverCup.dataset.s), activeColor);
+    }
     cleanupGhost();
   };
   
