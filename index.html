@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>果汁软糖 - 极速版</title>
+  <title>果汁软糖 - 质感回归版</title>
 
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0b1330">
@@ -15,14 +15,13 @@
   <style>
     :root{
       --text:#e5e7eb;
-      --panel:rgba(17,24,39,.75);
-      --blue:rgba(59,130,246,.9);
-      --red-glow: rgba(239, 68, 68, 0.4);
+      --panel:rgba(17,24,39,.65);
+      --blue:rgba(59,130,246,.95);
       
-      /* 基础尺寸变量 */
+      /* 动态变量：默认值 */
       --cup-sz: 50px; 
-      --candy-w: 86%;
-      --candy-h: 68%;
+      --candy-w: 86%; 
+      --candy-h: 68%; 
     }
 
     body{
@@ -30,208 +29,213 @@
       height:100vh;
       display:flex;
       justify-content:center;
-      background: #0b1330; /* 深蓝底色 */
       font-family: system-ui,-apple-system,sans-serif;
       color:var(--text);
       overflow:hidden;
       overscroll-behavior: none;
-      /* 简单的径向背景，减少渲染压力 */
-      background-image: 
-        radial-gradient(circle at 50% 30%, #1e293b 0%, #0b1330 70%);
+      
+      /* ===== 回归：高级背景 ===== */
+      background:
+        radial-gradient(900px 520px at 35% 10%, rgba(255,255,255,.16), transparent 55%),
+        radial-gradient(820px 520px at 75% 15%, rgba(255,255,255,.10), transparent 58%),
+        linear-gradient(180deg,#0b1330 0%,#0b2a3a 40%,#0a3a4a 70%,#0a2b43 100%);
     }
 
-    /* ===== 核心容器：强制手机比例 ===== */
+    /* ===== 背景泡泡 ===== */
+    .bg-bubbles{ position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:0; }
+    .bubble{
+      position:absolute; bottom:-60px; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.2), transparent 60%);
+      border:1px solid rgba(255,255,255,.15);
+      opacity:.4;
+      animation: rise var(--dur) linear infinite, sway var(--sway) ease-in-out infinite;
+      left: var(--x); width: var(--size); height: var(--size);
+      animation-delay: var(--delay);
+    }
+    @keyframes rise{ from{ transform: translateY(0); } to{ transform: translateY(-110vh); } }
+    @keyframes sway{ 0%,100%{ margin-left:0; } 50%{ margin-left:var(--sx); } }
+
+    /* ===== App 容器 ===== */
     .app-container {
       width: 100%;
-      max-width: 420px; /* 关键：锁定最大宽度，模仿手机 */
+      max-width: 440px; /* 限制手机宽度 */
       height: 100%;
       position: relative;
       display: flex;
       flex-direction: column;
-      background: rgba(0,0,0,0.2);
-      box-shadow: 0 0 50px rgba(0,0,0,0.5);
+      z-index: 1;
+      background: rgba(0,0,0,0.1);
+      backdrop-filter: blur(2px);
     }
 
-    /* 顶部栏 */
     header{
-      padding: 12px 16px;
+      padding: 10px 16px;
       display:flex; justify-content:space-between; align-items:center;
-      background: rgba(15, 23, 42, 0.6);
+      background: rgba(15, 23, 42, 0.4);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
       backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      z-index: 10;
     }
-    h1{ margin:0; font-size:16px; font-weight: 600; letter-spacing: 0.5px; }
-    
-    .status-bar{ display:flex; gap:12px; font-size:12px; color: #94a3b8; align-items: center; }
-    .status-bar span { color: #f1f5f9; font-weight: bold; }
+    h1{ margin:0; font-size:16px; font-weight: 600; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+    .status-bar{ font-size:12px; color: #cbd5e1; display:flex; gap:10px; }
+    .status-bar span { font-weight:bold; color:#fff; }
 
-    /* 按钮组 */
-    .controls {
-        display: flex; gap: 8px; padding: 8px 16px;
-        justify-content: flex-end;
-    }
+    .controls { display: flex; gap: 8px; padding: 8px 16px; justify-content: flex-end; }
     .btn{
-      background:rgba(51, 65, 85, 0.8);
-      color:var(--text);
-      border:1px solid rgba(255,255,255,0.1);
-      padding:6px 12px;
-      border-radius:6px;
-      cursor:pointer;
-      font-size: 12px;
-      touch-action: manipulation;
+      background:rgba(30, 41, 59, 0.7);
+      color:var(--text); border:1px solid rgba(255,255,255,0.15);
+      padding:6px 12px; border-radius:8px; font-size: 12px; cursor: pointer;
     }
-    .btn:active{ background: rgba(71, 85, 105, 1); transform: scale(0.96); }
+    .btn:active{ transform:scale(0.96); background:rgba(255,255,255,0.1); }
 
-    /* ===== 游戏主区域 ===== */
-    .game-area {
-        flex: 1;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        padding: 10px;
-        gap: 10px;
-    }
-
-    /* 尝试记录区 */
+    .game-area { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 10px; }
     .attempts-scroll {
-        flex: 1;
-        overflow-y: auto;
-        border-radius: 12px;
-        background: rgba(0,0,0,0.2);
-        border: 1px solid rgba(255,255,255,0.05);
-        padding: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+        flex: 1; overflow-y: auto;
+        padding: 10px 4px;
+        display: flex; flex-direction: column; gap: 12px;
         scroll-behavior: smooth;
     }
+    .attempts-scroll::-webkit-scrollbar{ width:4px; }
+    .attempts-scroll::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.2); border-radius:4px; }
 
-    /* 每一行 */
+    /* 行 */
     .row-card{
-      display: flex;
-      justify-content: center;
-      padding: 8px;
-      border-radius: 10px;
+      display: flex; justify-content: center;
+      padding: 10px;
+      border-radius: 16px;
       background: rgba(255,255,255,0.03);
-      border: 1px solid transparent;
-      transition: all 0.2s;
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: all 0.3s;
       flex-shrink: 0;
     }
     .row-card.active{
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.07);
       border-color: rgba(255,255,255,0.2);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
     }
 
-    .slots{
-      display:grid;
-      gap: 4px;
-      grid-template-columns: repeat(var(--count), var(--cup-sz)); 
-    }
+    .slots{ display:grid; gap: 6px; grid-template-columns: repeat(var(--count), var(--cup-sz)); }
 
-    /* ===== 杯子 ===== */
+    /* ===== 回归：高级玻璃杯 ===== */
     .cup{
       width: var(--cup-sz); 
-      height: calc(var(--cup-sz) * 0.9);
-      border-radius: 0 0 999px 999px; /* 半圆杯底 */
-      border-top: none;
-      position:relative; 
-      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
-      border: 1px solid rgba(255,255,255,0.2);
-      box-shadow: inset 0 -4px 6px rgba(0,0,0,0.2);
+      height: calc(var(--cup-sz) * 0.92);
+      border-radius:999px;
+      position:relative; overflow:hidden;
+      
+      /* 玻璃质感 */
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.25);
+      box-shadow:
+        inset 0 10px 20px rgba(0,0,0,.3),
+        inset 0 -10px 20px rgba(255,255,255,.05),
+        0 8px 16px rgba(0,0,0,.25);
+      backdrop-filter: blur(1px);
     }
-    .cup.dropHover{
-      background: rgba(59, 130, 246, 0.2);
-      border-color: #60a5fa;
+    /* 杯口高光 */
+    .cup::before{
+      content:""; position:absolute; inset:6px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.18); opacity:.8; pointer-events:none; z-index: 2;
     }
-    
-    /* 错误震动动画 */
-    .cup.shake {
-        animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-        border-color: #f87171;
-        background: rgba(239, 68, 68, 0.15);
+    /* 杯身反光 */
+    .cup::after{
+      content:""; position:absolute; left:10px; top:10px;
+      width:30%; height:60%; border-radius:999px;
+      background: linear-gradient(180deg, rgba(255,255,255,.25), transparent);
+      opacity:.7; pointer-events:none; filter: blur(1px); z-index: 2;
     }
-    @keyframes shake {
-      10%, 90% { transform: translate3d(-1px, 0, 0); }
-      20%, 80% { transform: translate3d(2px, 0, 0); }
-      30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
-      40%, 60% { transform: translate3d(3px, 0, 0); }
-    }
+    .cup.dropHover{ outline: 2px solid var(--blue); outline-offset: 2px; }
 
-    /* 错误残留标记 */
-    .residue-dot {
-        position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
-        width: 6px; height: 6px; border-radius: 50%;
+    /* ===== 回归：泼墨残留 (Residue) ===== */
+    .cup .residue-layer {
+      position: absolute; inset: 0;
+      background: 
+        radial-gradient(circle at 50% 70%, var(--c) 0%, transparent 60%),
+        radial-gradient(circle at 30% 40%, var(--c) 0%, transparent 40%);
+      opacity: 0.6;
+      filter: blur(6px);
+      z-index: 1;
+      pointer-events: none;
+      /* 简单的进场动画 */
+      animation: stain 0.5s ease-out forwards;
+    }
+    @keyframes stain { from { opacity: 0; transform: scale(0.8); } to { opacity: 0.6; transform: scale(1); } }
+
+    /* ===== 泼墨爆开效果 (Splat) ===== */
+    .splat {
+        position: absolute; inset: 10%;
         background: var(--c);
-        box-shadow: 0 0 4px var(--c);
+        mask-image: radial-gradient(circle, black 40%, transparent 70%);
+        -webkit-mask-image: radial-gradient(circle, black 40%, transparent 70%);
+        border-radius: 50%;
+        opacity: 0;
+        z-index: 5;
+        animation: splatter 0.4s ease-out forwards;
+        pointer-events: none;
+    }
+    @keyframes splatter {
+        0% { transform: scale(0.2); opacity: 0.9; }
+        50% { opacity: 0.8; }
+        100% { transform: scale(1.5); opacity: 0; }
     }
 
-    /* ===== 糖果 ===== */
+    /* ===== 回归：高级软糖 ===== */
     .candy{
       width: var(--candy-w); height: var(--candy-h);
-      border-radius: 99px;
-      position: absolute;
-      left: 50%; top: 50%;
-      transform: translate(-50%, -50%);
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), transparent 60%),
-                  linear-gradient(135deg, var(--bg) 0%, rgba(0,0,0,0.2) 100%);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      z-index: 5;
-      pointer-events: auto; /* 允许交互 */
+      border-radius:999px;
+      position:absolute; left:50%; top:50%; transform: translate(-50%, -50%);
+      z-index: 10;
+      
+      border:1px solid rgba(255,255,255,.25);
+      box-shadow:
+        inset 0 6px 10px rgba(255,255,255,.25),
+        inset 0 -10px 14px rgba(0,0,0,.25),
+        0 6px 12px rgba(0,0,0,.3);
+      background: linear-gradient(135deg, var(--bg), rgba(0,0,0,0.1));
     }
-    /* 调色盘里的糖果 */
-    .palette-candy {
-        position: relative; transform: none; left: auto; top: auto;
-        width: 100%; height: 100%;
+    .candy::before{
+      content:""; position:absolute; left:15%; top:15%;
+      width:50%; height:50%; border-radius:999px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.7), transparent 70%);
+      transform: rotate(-15deg); pointer-events:none;
     }
-    .candy.used { opacity: 0.3; filter: grayscale(0.8); }
+    
+    .candy.pop-anim { animation: pop-candy 0.3s ease-in forwards; }
+    @keyframes pop-candy { to { transform: translate(-50%, 10px) scale(0.1); opacity: 0; } }
 
-    /* ===== 底部调色盘 ===== */
+    /* 底部调色盘 */
     .palette-area {
-      background: rgba(15, 23, 42, 0.8);
-      border-top: 1px solid rgba(255,255,255,0.1);
-      padding: 10px 0 20px 0;
-      flex-shrink: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(15px);
+      border-top: 1px solid rgba(255,255,255,0.15);
+      padding: 10px 0 25px 0;
     }
     .palette-scroll {
-      display:flex;
-      gap: 8px;
-      padding: 0 16px;
-      overflow-x: auto;
-      height: 50px;
-      align-items: center;
+      display:flex; gap:10px; padding:0 16px; overflow-x:auto; align-items:center; height: 60px;
     }
-    .palette-scroll::-webkit-scrollbar{ display: none; } /* 隐藏滚动条 */
-    
-    .p-item {
-        width: 44px; height: 34px;
-        flex-shrink: 0;
-        display: flex; justify-content: center; align-items: center;
-    }
-    /* 调色盘糖果稍微小一点 */
-    .p-item .candy { width: 40px; height: 30px; } 
+    .p-item { width: 50px; height: 50px; flex-shrink: 0; position: relative; display: flex; justify-content: center; align-items: center; }
+    .palette-candy { position: relative; left: auto; top: auto; transform: none; width: 100%; height: 100%; }
+    .candy.used { opacity: 0.4; filter: grayscale(0.6) brightness(0.8); }
 
-    /* ===== 拖拽幻影 ===== */
+    /* 拖拽幻影 */
     .drag-ghost {
-      position: fixed;
-      pointer-events: none;
-      z-index: 9999;
-      width: 50px; height: 36px;
-      opacity: 0.9;
-      transform: translate(-50%, -50%) scale(1.2);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+      position: fixed; pointer-events: none; z-index: 9999;
+      width: 54px; height: 40px; opacity: 0.9;
+      transform: translate(-50%, -50%) scale(1.1);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.4);
     }
+
   </style>
 </head>
 
 <body>
+  <div class="bg-bubbles" id="bgBubbles"></div>
+
   <div class="app-container">
     <header>
         <h1>🍬 果汁软糖</h1>
         <div class="status-bar">
             <div>关卡 <span id="level">1</span></div>
-            <div>数量 <span id="pairs">3</span></div>
+            <div>配对 <span id="pairs">3</span></div>
         </div>
     </header>
     
@@ -242,54 +246,41 @@
     </div>
 
     <div class="game-area">
-        <div class="attempts-scroll" id="attempts">
-            </div>
+        <div class="attempts-scroll" id="attempts"></div>
     </div>
 
     <div class="palette-area">
-        <div class="palette-scroll" id="palette">
-            </div>
+        <div class="palette-scroll" id="palette"></div>
     </div>
   </div>
 
   <audio id="bg-soda" loop src="soda.mp3"></audio>
   <audio id="sfx-pop" src="pop.mp3"></audio>
-  <audio id="sfx-correct" src="rightanswer-95129.mp3"></audio>
+  <audio id="sfx-correct" src="rightanswer-95219.mp3"></audio>
 
 <script>
 (() => {
-  /* --- 1. 配置与状态 --- */
+  /* --- 配置 --- */
   const COLORS = [
     "#ef4444", "#f97316", "#fde047", "#16a34a", "#22d3ee", "#1d4ed8", "#a855f7", 
     "#fb7185", "#5b341a", "#9ca3af", "#84cc16", "#4338ca", "#e11d48", "#14532d"
   ];
+  const KEY_SAVE = 'gummy_v4_save';
   
-  const KEY_SAVE = 'gummy_v3_save';
-  
-  // 游戏状态
   let state = {
-    level: 1,
-    pairCount: 3,
-    colors: [],     // 本关用到的颜色索引
-    answer: [],     // 正确答案序列
-    rows: [],       // 玩家猜测记录
-    activeRow: 0,
-    sound: false
+    level: 1, pairCount: 3, colors: [], answer: [],
+    rows: [], activeRow: 0, sound: false
   };
 
-  /* --- 2. 核心逻辑 --- */
-  
+  /* --- 游戏逻辑 --- */
   function initGame() {
-    // 读取存档
     const savedLvl = localStorage.getItem(KEY_SAVE);
     state.level = savedLvl ? parseInt(savedLvl) : 1;
     startLevel();
   }
 
   function getPairCount(lvl) {
-    // 25关以后：9-14个随机
     if (lvl > 25) return Math.floor(Math.random() * 6) + 9;
-    // 25关以前：原有逻辑
     if (lvl === 1) return 3;
     const n = 4 + Math.floor((lvl - 2) / 3);
     return Math.min(n, 9);
@@ -297,36 +288,29 @@
 
   function startLevel() {
     state.pairCount = getPairCount(state.level);
-    
-    // 生成答案
     const pool = COLORS.map((_, i) => i).sort(() => Math.random() - 0.5);
     state.colors = pool.slice(0, state.pairCount);
     state.answer = [...state.colors].sort(() => Math.random() - 0.5);
     
-    // 重置行
-    state.rows = [{ guess: Array(state.pairCount).fill(null), status: 'active' }];
+    state.rows = [{ 
+        guess: Array(state.pairCount).fill(null), 
+        status: 'active',
+        residue: Array(state.pairCount).fill(null) // 回归：记录残留颜色
+    }];
     state.activeRow = 0;
 
     renderUI();
-    // 适配尺寸
     adjustSize();
   }
 
   function handleGuess(rowIdx, slotIdx, colorId) {
     const row = state.rows[rowIdx];
     if (row.status !== 'active') return;
-
-    // 如果该颜色已在别处，先移除
     const existIdx = row.guess.indexOf(colorId);
     if (existIdx !== -1 && existIdx !== slotIdx) row.guess[existIdx] = null;
-    
     row.guess[slotIdx] = colorId;
-    renderBoard(); // 局部刷新
-
-    // 检查行是否填满
-    if (row.guess.every(c => c !== null)) {
-        checkRow(row);
-    }
+    renderBoard();
+    if (row.guess.every(c => c !== null)) checkRow(row);
   }
 
   function checkRow(row) {
@@ -337,42 +321,56 @@
         playSound('correct');
         renderBoard();
         setTimeout(() => {
-            state.level++;
-            localStorage.setItem(KEY_SAVE, state.level);
+            state.level++; localStorage.setItem(KEY_SAVE, state.level);
             startLevel();
-        }, 800);
+        }, 1000);
     } else {
-        row.status = 'bad'; // 触发震动动画
+        row.status = 'bad';
         playSound('pop');
-        renderBoard();
         
-        // 极速恢复：500ms后进入下一行
+        // 核心修改：计算残留 (Residue)
+        row.guess.forEach((cid, i) => {
+            const isRight = (cid === state.answer[i]);
+            // 如果错了，就把这个颜色留在杯子里 (residue)
+            // 如果之前已经有残留，这里保留之前的还是新的？通常是叠加或保留最新的
+            if (!isRight) {
+                row.residue[i] = COLORS[cid]; 
+            }
+        });
+
+        renderBoard(); // 触发渲染，显示 residue 和 splat
+        
+        // 延时进入下一行
         setTimeout(() => {
-            state.rows.push({ guess: Array(state.pairCount).fill(null), status: 'active' });
+            state.rows.push({ 
+                guess: Array(state.pairCount).fill(null), 
+                status: 'active',
+                residue: Array(state.pairCount).fill(null)
+            });
             state.activeRow++;
             renderBoard();
-            
-            // 自动滚动到底部
             const el = document.getElementById('attempts');
             el.scrollTop = el.scrollHeight;
-        }, 500);
+        }, 600); // 稍微给点时间看爆炸效果
     }
   }
 
-  /* --- 3. 渲染系统 (Render) --- */
-
+  /* --- 渲染 --- */
   function adjustSize() {
-    // 强制适配：根据屏幕宽度的限制来计算
-    // 容器最大 420px，左右padding共20px，间隙4px
-    const containerW = Math.min(window.innerWidth, 420); 
+    const containerW = Math.min(window.innerWidth, 440); 
     const usableW = containerW - 24; 
-    let sz = (usableW - (state.pairCount - 1) * 4) / state.pairCount;
-    
-    // 限制大小范围
-    sz = Math.max(28, Math.min(50, sz));
-    
+    let sz = (usableW - (state.pairCount - 1) * 6) / state.pairCount;
+    sz = Math.max(30, Math.min(65, sz));
     document.documentElement.style.setProperty('--cup-sz', sz + 'px');
     document.documentElement.style.setProperty('--count', state.pairCount);
+    // 动态调整糖果内边距
+    if (sz < 40) {
+        document.documentElement.style.setProperty('--candy-w', '90%');
+        document.documentElement.style.setProperty('--candy-h', '80%');
+    } else {
+        document.documentElement.style.setProperty('--candy-w', '86%');
+        document.documentElement.style.setProperty('--candy-h', '68%');
+    }
   }
 
   function renderUI() {
@@ -385,32 +383,25 @@
   function renderPalette() {
     const p = document.getElementById('palette');
     p.innerHTML = '';
-    
-    // 找出已使用的颜色（置灰）
     const activeRow = state.rows[state.activeRow];
     const used = new Set(activeRow ? activeRow.guess : []);
 
     state.colors.forEach(cid => {
         const wrap = document.createElement('div');
         wrap.className = 'p-item';
-        
         const c = document.createElement('div');
         c.className = 'candy palette-candy';
         c.style.setProperty('--bg', COLORS[cid]);
         if (used.has(cid)) c.classList.add('used');
         
-        // 触摸事件绑定
         c.addEventListener('touchstart', (e) => handleTouchStart(e, c, cid), {passive: false});
-        // PC鼠标事件
         c.onmousedown = (e) => {
-            // 简单的PC兼容，不作为重点
             handleTouchStart({
                 preventDefault:()=>{}, 
                 changedTouches:[{identifier:99, clientX:e.clientX, clientY:e.clientY}],
                 touches: []
             }, c, cid);
         };
-        
         wrap.appendChild(c);
         p.appendChild(wrap);
     });
@@ -423,58 +414,66 @@
     state.rows.forEach((row, rIdx) => {
         const card = document.createElement('div');
         card.className = 'row-card' + (rIdx === state.activeRow ? ' active' : '');
-        
         const slots = document.createElement('div');
         slots.className = 'slots';
         
-        row.guess.forEach((cid, sIdx) => {
+        // 遍历每一格
+        for(let sIdx=0; sIdx<state.pairCount; sIdx++) {
+            const cid = row.guess[sIdx];
             const cup = document.createElement('div');
             cup.className = 'cup';
-            cup.dataset.r = rIdx;
-            cup.dataset.s = sIdx;
+            cup.dataset.r = rIdx; cup.dataset.s = sIdx;
 
-            // 错误状态：震动 + 变红
-            if (row.status === 'bad') {
-                const isWrong = (cid !== state.answer[sIdx]);
-                if (isWrong) {
-                    cup.classList.add('shake');
-                    // 留下一个小点标记
-                    const dot = document.createElement('div');
-                    dot.className = 'residue-dot';
-                    dot.style.setProperty('--c', COLORS[cid]);
-                    cup.appendChild(dot);
+            // 1. 渲染残留 (Residue) - 永远在底层
+            if (row.residue[sIdx]) {
+                const resLayer = document.createElement('div');
+                resLayer.className = 'residue-layer';
+                resLayer.style.setProperty('--c', row.residue[sIdx]);
+                cup.appendChild(resLayer);
+            }
+
+            // 2. 渲染错误爆炸 (Splat) - 只在刚出错的那一瞬间显示
+            if (row.status === 'bad' && cid !== null && cid !== state.answer[sIdx]) {
+                const splat = document.createElement('div');
+                splat.className = 'splat';
+                splat.style.setProperty('--c', COLORS[cid]);
+                cup.appendChild(splat);
+            }
+
+            // 3. 渲染糖果本体
+            // 逻辑：如果这一行是 bad，且这个糖果是错的，它应该消失（pop掉）或者被爆炸掩盖
+            // 但为了视觉连贯，我们让它播放一个消失动画
+            if (cid !== null) {
+                // 如果是坏的行，且是错的糖果 -> 播放消失动画
+                if (row.status === 'bad' && cid !== state.answer[sIdx]) {
+                    const c = document.createElement('div');
+                    c.className = 'candy pop-anim'; // 增加消失动画
+                    c.style.setProperty('--bg', COLORS[cid]);
+                    cup.appendChild(c);
+                } 
+                // 否则（正常猜测中，或者猜对了），正常显示糖果
+                else {
+                    const c = document.createElement('div');
+                    c.className = 'candy';
+                    c.style.setProperty('--bg', COLORS[cid]);
+                    cup.appendChild(c);
                 }
             }
-
-            // 放入糖果
-            if (cid !== null && !(row.status === 'bad' && cid !== state.answer[sIdx])) {
-                 const c = document.createElement('div');
-                 c.className = 'candy';
-                 c.style.setProperty('--bg', COLORS[cid]);
-                 cup.appendChild(c);
-            }
-            
             slots.appendChild(cup);
-        });
-        
+        }
         card.appendChild(slots);
         board.appendChild(card);
     });
   }
 
-  /* --- 4. 交互系统 (Touch) --- */
-  let ghost = null;
-  let dragId = null;
-  let activeColor = null;
-  let hoverCup = null;
+  /* --- 交互 (拖拽) --- */
+  let ghost = null, dragId = null, activeColor = null, hoverCup = null;
 
   function handleTouchStart(e, el, cid) {
     e.preventDefault();
-    const t = e.changedTouches[0] || e; // 兼容鼠标伪造的touch
-    dragId = t.identifier;
-    activeColor = cid;
-
-    // 创建幻影
+    const t = e.changedTouches[0] || e; 
+    dragId = t.identifier; activeColor = cid;
+    
     ghost = el.cloneNode(true);
     ghost.className = 'candy drag-ghost';
     ghost.style.setProperty('--bg', COLORS[cid]);
@@ -488,125 +487,79 @@
     const t = Array.from(e.changedTouches).find(x => x.identifier === dragId);
     if (!t) return;
     e.preventDefault();
-
-    ghost.style.left = t.clientX + 'px';
-    ghost.style.top = t.clientY + 'px';
-
-    // 检测杯子
+    ghost.style.left = t.clientX + 'px'; ghost.style.top = t.clientY + 'px';
+    
     const elUnder = document.elementFromPoint(t.clientX, t.clientY);
     const cup = elUnder ? elUnder.closest('.cup') : null;
-    
-    // 只允许拖入当前行的杯子
     if (cup && parseInt(cup.dataset.r) === state.activeRow) {
         if (hoverCup !== cup) {
             if (hoverCup) hoverCup.classList.remove('dropHover');
-            cup.classList.add('dropHover');
-            hoverCup = cup;
+            cup.classList.add('dropHover'); hoverCup = cup;
         }
     } else if (hoverCup) {
-        hoverCup.classList.remove('dropHover');
-        hoverCup = null;
+        hoverCup.classList.remove('dropHover'); hoverCup = null;
     }
   }, {passive: false});
   
-  // 兼容PC鼠标移动
+  // 鼠标兼容
   document.addEventListener('mousemove', (e) => {
-      if (dragId === 99) { // 模拟ID
-         const fakeEvent = {
-             changedTouches: [{identifier: 99, clientX: e.clientX, clientY: e.clientY}],
-             preventDefault: ()=>{}
-         };
-         // 复用 touchmove 逻辑（略作简化调用）
-         const t = fakeEvent.changedTouches[0];
-         ghost.style.left = t.clientX + 'px';
-         ghost.style.top = t.clientY + 'px';
-         const elUnder = document.elementFromPoint(t.clientX, t.clientY);
+      if (dragId === 99) { 
+         ghost.style.left = e.clientX + 'px'; ghost.style.top = e.clientY + 'px';
+         const elUnder = document.elementFromPoint(e.clientX, e.clientY);
          const cup = elUnder ? elUnder.closest('.cup') : null;
          if (cup && parseInt(cup.dataset.r) === state.activeRow) {
             if (hoverCup !== cup) {
                 if(hoverCup) hoverCup.classList.remove('dropHover');
-                cup.classList.add('dropHover');
-                hoverCup = cup;
+                cup.classList.add('dropHover'); hoverCup = cup;
             }
-         } else if(hoverCup) {
-             hoverCup.classList.remove('dropHover');
-             hoverCup = null;
-         }
+         } else if(hoverCup) { hoverCup.classList.remove('dropHover'); hoverCup = null; }
       }
   });
 
   const endDrag = (e) => {
     if (!ghost) return;
-    // 鼠标兼容
-    let t = null;
-    if (e.type === 'mouseup') t = {identifier: 99};
-    else t = Array.from(e.changedTouches).find(x => x.identifier === dragId);
-    
-    if (!t) return;
-
-    ghost.remove();
-    ghost = null;
-    dragId = null;
-
+    ghost.remove(); ghost = null; dragId = null;
     if (hoverCup) {
         hoverCup.classList.remove('dropHover');
         handleGuess(parseInt(hoverCup.dataset.r), parseInt(hoverCup.dataset.s), activeColor);
         hoverCup = null;
     }
   };
-
   document.addEventListener('touchend', endDrag);
   document.addEventListener('mouseup', endDrag);
 
-  /* --- 5. 音频与工具 --- */
-  const audios = {
-    bg: document.getElementById('bg-soda'),
-    pop: document.getElementById('sfx-pop'),
-    correct: document.getElementById('sfx-correct')
-  };
-  // 预设置音量
-  audios.bg.volume = 0.3;
+  /* --- 背景泡泡 --- */
+  const bg = document.getElementById("bgBubbles");
+  for(let i=0;i<20;i++){
+    const b = document.createElement("div");
+    b.className = "bubble";
+    const size = 15 + Math.random()*35;
+    b.style.setProperty("--size", size+"px");
+    b.style.setProperty("--x", Math.random()*100 + "vw");
+    b.style.setProperty("--dur", (12+Math.random()*15)+"s");
+    b.style.setProperty("--delay", (-Math.random()*20)+"s");
+    b.style.setProperty("--sway", (3+Math.random()*4)+"s");
+    b.style.setProperty("--sx", (Math.random()*30-15)+"px");
+    bg.appendChild(b);
+  }
 
+  /* --- 音频/按钮 --- */
+  const audios = { bg: document.getElementById('bg-soda'), pop: document.getElementById('sfx-pop'), correct: document.getElementById('sfx-correct') };
+  audios.bg.volume = 0.3;
   function playSound(key) {
     if (!state.sound) return;
-    const a = audios[key];
-    if (a) {
-        a.currentTime = 0;
-        a.play().catch(e => console.log('Audio blocked', e));
-    }
+    audios[key].currentTime = 0;
+    audios[key].play().catch(()=>{});
   }
-
   document.getElementById('soundBtn').onclick = function() {
-    state.sound = !state.sound;
-    this.innerText = state.sound ? '🔊' : '🔇';
-    if (state.sound) {
-        audios.bg.play().catch(()=>{});
-    } else {
-        audios.bg.pause();
-    }
+    state.sound = !state.sound; this.innerText = state.sound ? '🔊' : '🔇';
+    state.sound ? audios.bg.play().catch(()=>{}) : audios.bg.pause();
   };
-
-  document.getElementById('resetBtn').onclick = () => {
-     startLevel(); // 重玩本关
-  };
-  document.getElementById('wipeBtn').onclick = () => {
-     if(confirm('确定要清除所有进度从第1关开始吗？')) {
-         localStorage.removeItem(KEY_SAVE);
-         state.level = 1;
-         startLevel();
-     }
-  };
-  
+  document.getElementById('resetBtn').onclick = () => startLevel();
+  document.getElementById('wipeBtn').onclick = () => { if(confirm('确定清档？')) { localStorage.removeItem(KEY_SAVE); state.level = 1; startLevel(); }};
   window.addEventListener('resize', adjustSize);
-
-  // 启动
   initGame();
-  
-  // SW
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => { navigator.serviceWorker.register("./sw.js").catch(()=>{}); });
-  }
-
+  if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(()=>{})); }
 })();
 </script>
 </body>
