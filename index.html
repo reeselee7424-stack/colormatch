@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>果汁软糖 - 果冻版</title>
+  <title>果汁软糖 - 经典果冻版</title>
 
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#1e3a8a">
@@ -15,178 +15,178 @@
   <style>
     :root{
       --text: #fff;
-      --blue-glow: rgba(59,130,246,0.6);
-      
-      /* 尺寸调整：整体缩小 */
-      --cup-w: 42px; 
-      --cup-h: 46px;
-      --candy-sz: 34px;
+      --cup-sz: 54px; 
+      --candy-sz: 44px; /* 糖果尺寸 */
     }
 
     body{
       margin:0; height:100vh; display:flex; justify-content:center;
-      font-family: "PingFang SC", "Segoe UI", sans-serif;
+      font-family: system-ui,-apple-system,sans-serif;
       color:var(--text); overflow:hidden; overscroll-behavior: none;
       
-      /* ===== 参考图背景：深海蓝渐变 ===== */
-      background: radial-gradient(circle at 50% 20%, #1e40af 0%, #172554 60%, #020617 100%);
+      /* ===== 1. 背景还原：深海蓝渐变 ===== */
+      background: radial-gradient(circle at 50% 30%, #2563eb 0%, #1e3a8a 40%, #0f172a 100%);
     }
 
-    /* 气泡装饰 */
+    /* 气泡氛围 */
     .bg-bubbles{ position:fixed; inset:0; pointer-events:none; z-index:0; }
     .bubble{
       position:absolute; border-radius:50%;
       border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.05);
+      background: rgba(255,255,255,0.02);
       animation: rise linear infinite;
-      bottom:-60px; left: var(--x); width: var(--size); height: var(--size);
+      bottom:-50px; left: var(--x); width: var(--size); height: var(--size);
       animation-duration: var(--dur);
     }
     @keyframes rise{ to{ transform: translateY(-110vh); } }
 
     .app-container {
-      width: 100%; max-width: 420px; height: 100%;
+      width: 100%; max-width: 440px; height: 100%;
       position: relative; display: flex; flex-direction: column; z-index: 1;
+      /* 稍微加一点暗色遮罩让UI更清晰 */
+      background: rgba(0,0,0,0.1);
     }
 
-    /* 顶部栏 */
     header{
-      padding: 15px 20px; display:flex; justify-content:space-between; align-items:flex-start;
+      padding: 12px 16px; display:flex; justify-content:space-between; align-items:center;
+      /* 透明顶栏 */
+      background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent);
     }
-    .info-area { text-align: center; flex: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-    .info-area h2 { margin:0; font-size: 18px; font-weight: 500; }
-    .info-area p { margin:4px 0 0; font-size: 14px; opacity: 0.8; }
-    
-    .controls { display: flex; gap: 10px; }
-    .icon-btn{
-      background: rgba(255,255,255,0.2); 
-      width: 36px; height: 36px; border-radius: 50%;
-      display: flex; justify-content: center; align-items: center;
-      border: 1px solid rgba(255,255,255,0.3);
-      cursor: pointer; font-size: 16px;
-      backdrop-filter: blur(4px);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    }
-    .icon-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.3); }
+    h1{ margin:0; font-size:18px; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    .status-bar{ font-size:13px; color: #cbd5e1; display:flex; gap:12px; }
+    .status-bar span { color:#fff; font-weight: bold; }
 
-    /* 游戏区 */
-    .game-area { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 10px 0; }
-    .attempts-scroll {
-        flex: 1; overflow-y: auto; padding: 20px 0;
-        display: flex; flex-direction: column; gap: 16px;
-        align-items: center;
-        scroll-behavior: smooth;
-        mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
-        -webkit-mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
+    .controls { display: flex; gap: 8px; padding: 0 16px; justify-content: flex-end; }
+    .btn{
+      background:rgba(255, 255, 255, 0.15); color:#fff; 
+      border:1px solid rgba(255,255,255,0.2);
+      padding:6px 12px; border-radius:20px; font-size: 12px; cursor: pointer;
+      backdrop-filter: blur(4px);
     }
-    
+
+    .game-area { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 20px 10px; }
+    .attempts-scroll {
+        flex: 1; overflow-y: auto; padding: 10px 0;
+        display: flex; flex-direction: column; gap: 16px;
+        scroll-behavior: smooth;
+    }
+    .attempts-scroll::-webkit-scrollbar { display: none; }
+
     .row-card{
-      display: flex; justify-content: center; padding: 0 10px;
-      flex-shrink: 0; transition: all 0.3s;
-      opacity: 0.8; transform: scale(0.95);
+      display: flex; justify-content: center; padding: 4px;
+      border-radius: 12px; 
+      flex-shrink: 0;
     }
     /* 当前行高亮 */
     .row-card.active{
-      opacity: 1; transform: scale(1);
+      background: rgba(255,255,255,0.05);
+      box-shadow: 0 0 20px rgba(255,255,255,0.1);
     }
 
-    .slots{ display:grid; gap: 8px; grid-template-columns: repeat(var(--count), var(--cup-w)); }
+    .slots{ display:grid; gap: 8px; grid-template-columns: repeat(var(--count), var(--cup-sz)); justify-content: center;}
 
-    /* ===== 新版杯子：梯形玻璃杯 (Shot Glass) ===== */
+    /* ===== 2. 杯子还原：透明玻璃Shot杯 ===== */
     .cup{
-      width: var(--cup-w); height: var(--cup-h);
+      width: var(--cup-sz); height: calc(var(--cup-sz) * 0.9);
+      /* 杯型：上宽下窄 */
+      clip-path: polygon(0 0, 100% 0, 90% 100%, 10% 100%);
+      background: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+      border-top: 2px solid rgba(255,255,255,0.5); /* 杯口亮圈 */
       position:relative; 
-      /* 梯形造型 */
-      border-radius: 2px 2px 12px 12px;
-      /* 玻璃质感 */
-      background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
-      border: 1px solid rgba(255,255,255,0.3);
-      border-top: 1px solid rgba(255,255,255,0.5); /* 杯口更亮 */
-      box-shadow: 
-        inset 0 0 8px rgba(255,255,255,0.1),
-        0 4px 8px rgba(0,0,0,0.3);
     }
-    /* 杯底厚度感 */
-    .cup::after {
-      content:""; position:absolute; bottom:2px; left:4px; right:4px; height: 6px;
-      background: rgba(255,255,255,0.1); border-radius: 0 0 8px 8px;
-      filter: blur(1px);
+    /* 杯身光泽 */
+    .cup::before{
+      content:""; position:absolute; left: 15%; top: 10%; width: 20%; height: 70%;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+      border-radius: 99px; pointer-events: none;
     }
-    /* 拖拽高亮 */
-    .cup.dropHover{ 
-      background: rgba(255,255,255,0.25); 
-      box-shadow: 0 0 15px var(--blue-glow);
-      border-color: #fff;
-    }
+    .cup.dropHover{ background: rgba(255,255,255,0.3); }
 
-    /* 残留层 (只在杯底) */
+    /* 残留 (Residue) - 只在杯底显示一点点颜色 */
     .residue-layer {
-      position: absolute; bottom: 4px; left: 4px; right: 4px; height: 20px;
-      background: var(--c); opacity: 0.8;
-      border-radius: 4px 4px 8px 8px;
-      filter: blur(4px); pointer-events: none;
+      position: absolute; bottom: 5%; left: 10%; width: 80%; height: 30%;
+      background: var(--c); opacity: 0.6; filter: blur(4px);
+      border-radius: 50%; pointer-events: none;
     }
 
-    /* ===== 新版软糖：果冻质感 (Gumdrop) ===== */
+    /* ===== 3. 糖果还原：Q弹果冻质感 ===== */
     .candy{
       width: var(--candy-sz); height: calc(var(--candy-sz) * 0.85);
-      position:absolute; left:50%; top:50%; 
-      transform: translate(-50%, -40%); /* 稍微靠下一点 */
-      z-index: 10;
+      border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%; /* 馒头形状 */
+      position:absolute; left:50%; top:45%; /* 稍微靠上一点，因为杯子是梯形 */
+      transform: translate(-50%, -50%); z-index: 10;
       
-      /* 果冻形状：上圆下平 */
-      border-radius: 50% 50% 45% 45%;
+      /* 果冻核心：径向渐变模拟透光 */
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.2) 20%, var(--bg) 60%, rgba(0,0,0,0.3) 100%);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
       
-      /* 高级果冻质感 */
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, transparent 40%),
-                  radial-gradient(circle at 50% 100%, rgba(255,255,255,0.4) 0%, transparent 50%),
-                  var(--bg);
-      
-      box-shadow: 
-        inset 0 -2px 4px rgba(0,0,0,0.2), /* 底部阴影 */
-        0 2px 4px rgba(0,0,0,0.3);     /* 投影 */
-      
-      border: 1px solid rgba(255,255,255,0.15);
+      transition: opacity 0.2s, transform 0.2s;
     }
-    
-    .candy.fade-out { opacity: 0; transform: translate(-50%, -20%) scale(0.5); transition: all 0.3s; }
+    /* 顶部高光 (湿润感) */
+    .candy::after{
+      content:""; position:absolute; left: 20%; top: 15%; width: 30%; height: 20%;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.9);
+      filter: blur(1px);
+    }
 
-    /* 底部调色盘 */
+    .candy.fade-out { opacity: 0; transform: translate(-50%, -30%) scale(0.5); }
+
+    /* ===== 4. 底部调色盘与凹槽 ===== */
     .palette-area {
-      background: rgba(15, 23, 42, 0.6); 
-      border-top: 1px solid rgba(255,255,255,0.1);
-      padding: 0;
-      /* 底部圆角卡片感 */
-      margin: 0 10px 20px 10px;
-      border-radius: 20px;
-      backdrop-filter: blur(20px);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      background: linear-gradient(to top, #1e3a8a, #2563eb); /* 稍微亮一点的蓝色底座 */
+      padding: 10px 0 30px 0;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+      position: relative;
     }
+    /* 顶部光条，增加立体感 */
+    .palette-area::before {
+        content:""; position: absolute; top:0; left:0; right:0; height: 1px;
+        background: rgba(255,255,255,0.3);
+    }
+
     .palette-scroll { 
-      display:flex; justify-content: center; gap:8px; 
-      padding: 12px; flex-wrap: wrap; 
+        display:flex; gap:16px; padding:0 20px; overflow-x:auto; height: 70px; align-items:center; 
+        justify-content: center; /* 居中 */
     }
+    
+    /* 凹槽容器 */
     .p-item { 
-      width: 44px; height: 44px; 
-      display:flex; justify-content:center; align-items:center; 
+        width: 50px; height: 50px; flex-shrink: 0; 
+        display:flex; justify-content:center; align-items:center; 
+        position: relative;
     }
     
-    .palette-candy { position: relative; left: auto; top: auto; transform: none; width: 100%; height: 100%; }
-    
-    /* 拖拽源阴影 */
-    .palette-candy.dragging-source {
-      opacity: 0.3; background: #000 !important;
-      border-radius: 50%; transform: scale(0.8);
-      box-shadow: inset 0 0 10px #000;
+    /* 凹槽 (空的时候显示) */
+    .p-item::before {
+        content:""; position: absolute;
+        width: 44px; height: 44px;
+        border-radius: 50%;
+        background: rgba(0,0,0,0.4); /* 深色坑 */
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.6); /* 内阴影 */
+        z-index: 0;
     }
-    .palette-candy.dragging-source::before { display:none; }
 
-    .candy.used { filter: grayscale(0.8) opacity(0.4); }
+    .palette-candy { 
+        position: relative; z-index: 1; /* 糖果浮在坑上面 */
+        top: 0; transform: none; left: 0;
+        width: 100%; height: 100%; /* 填满容器 */
+        /* 稍微调整调色盘里糖果的形状，让它看起来是放在坑里的 */
+        border-radius: 50%; 
+        height: 44px; width: 44px;
+    }
+    
+    /* ===== 核心：拖拽时隐藏原糖果，露出凹槽 ===== */
+    .palette-candy.dragging-source { opacity: 0; }
+    
+    .candy.used { filter: grayscale(0.8) opacity(0.5); }
 
-    /* 拖拽鬼影 */
+    /* 拖拽幻影 */
     .drag-ghost {
       position: fixed; pointer-events: none; z-index: 9999;
-      opacity: 0.9; transform: translate(-50%, -50%) scale(1.2);
+      width: 50px; height: 50px; opacity: 0.9;
+      transform: translate(-50%, -50%) scale(1.2);
+      filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
     }
   </style>
 </head>
@@ -196,13 +196,14 @@
 
   <div class="app-container">
     <header>
-        <div class="info-area">
-          <h2>关卡 <span id="level">1</span></h2>
-          <p>配对 <span id="pairs">3</span></p>
+        <h1>🍬 果汁软糖</h1>
+        <div class="status-bar">
+            <span>第 <span id="level">1</span> 关</span>
         </div>
         <div class="controls">
-            <div class="icon-btn" id="soundBtn">🔇</div>
-            <div class="icon-btn" id="resetBtn">↺</div>
+            <button class="btn" id="soundBtn">🔇</button>
+            <button class="btn" id="resetBtn">↺</button>
+            <button class="btn" id="wipeBtn" style="color:#fca5a5; border-color:rgba(239,68,68,0.4)">⚠</button>
         </div>
     </header>
 
@@ -217,80 +218,40 @@
 
   <audio id="bg-soda" loop src="soda.mp3" preload="auto"></audio>
   <audio id="sfx-pop" src="pop.mp3" preload="auto"></audio>
-  <audio id="sfx-correct" src="correct.mp3" preload="auto"></audio>
+  <audio id="sfx-correct" src="rightanswer-95219.mp3" preload="auto"></audio>
 
 <script>
 (() => {
-  /* ===== 颜色池：高饱和度果冻色 ===== */
-  const COLORS = [
-    "#dc2626", // 莓果红
-    "#f59e0b", // 橘子橙
-    "#facc15", // 柠檬黄
-    "#4ade80", // 苹果绿
-    "#22d3ee", // 冰河蓝
-    "#3b82f6", // 海洋蓝
-    "#a855f7", // 葡萄紫
-    "#f472b6", // 蜜桃粉
-    "#57534e", // 咖啡棕
-  ];
-
-  const KEY_SAVE = 'gummy_v8_save';
+  // 鲜艳的果冻色值
+  const COLORS = ["#ef4444", "#f97316", "#facc15", "#22c55e", "#06b6d4", "#3b82f6", "#a855f7", "#ec4899", "#78350f", "#64748b", "#84cc16", "#4338ca", "#be123c", "#14532d"];
+  const KEY_SAVE = 'gummy_v7_save';
   
   let state = { level: 1, pairCount: 3, colors: [], answer: [], rows: [], activeRow: 0, sound: true };
   
-  /* --- 修复版音频系统 --- */
+  /* --- 音频系统 --- */
   const audios = { 
     bg: document.getElementById('bg-soda'), 
     pop: document.getElementById('sfx-pop'), 
     correct: document.getElementById('sfx-correct') 
   };
-  let audioReady = false;
+  let audioUnlocked = false;
 
-  // 1. 初始化时降低音量
-  Object.values(audios).forEach(a => { a.volume = 0; });
-
-  // 2. 强力解锁函数：播放所有音频一瞬间
-  function initAudioSystem() {
-    if (audioReady) return;
-    
-    const playPromises = Object.values(audios).map(a => {
-        a.muted = true; // 先静音防止爆音
-        const p = a.play();
-        if (p !== undefined) {
-            return p.then(() => {
-                a.pause();
-                a.currentTime = 0;
-                a.muted = false; // 解除静音
-                // 恢复正常音量
-                if(a.id === 'bg-soda') a.volume = 0.3; else a.volume = 1; 
-            }).catch(e => console.warn("Audio warmup failed", e));
-        }
+  function unlockAudio() {
+    if (audioUnlocked) return;
+    Object.values(audios).forEach(a => {
+        a.volume = 0; a.play().catch(()=>{});
+        setTimeout(() => { a.pause(); a.currentTime=0; if(a.id==='bg-soda') a.volume=0.3; else a.volume=1; }, 50);
     });
-
-    Promise.all(playPromises).then(() => {
-        audioReady = true;
-        if(state.sound) audios.bg.play().catch(()=>{});
-    });
-
-    // 移除监听
-    document.removeEventListener('touchstart', initAudioSystem);
-    document.removeEventListener('click', initAudioSystem);
+    audioUnlocked = true;
+    if(state.sound) setTimeout(() => audios.bg.play().catch(()=>{}), 200);
   }
-
-  // 监听所有交互以解锁音频
-  document.addEventListener('touchstart', initAudioSystem, {capture:true, once:true});
-  document.addEventListener('click', initAudioSystem, {capture:true, once:true});
+  document.addEventListener('touchstart', unlockAudio, {once:true});
+  document.addEventListener('click', unlockAudio, {once:true});
 
   function playSound(key) {
     if (!state.sound) return;
     const a = audios[key];
-    if (a) {
-        a.currentTime = 0;
-        // 再次确保解除静音和音量正确
-        a.muted = false;
-        a.volume = 1;
-        a.play().catch(e => console.warn("Play failed", e));
-    }
+    if (a) { a.currentTime=0; a.volume=1; a.play().catch(()=>{}); }
   }
 
   /* --- 游戏逻辑 --- */
@@ -300,9 +261,9 @@
     startLevel();
   }
   function getPairCount(lvl) {
+    if (lvl > 25) return Math.floor(Math.random() * 6) + 9;
     if (lvl === 1) return 3;
-    if (lvl === 2) return 4;
-    return Math.min(4 + Math.floor((lvl - 1) / 3), 5); // 限制最多5个，为了不换行，保持美观
+    return Math.min(4 + Math.floor((lvl - 2) / 3), 9);
   }
   function startLevel() {
     state.pairCount = getPairCount(state.level);
@@ -336,29 +297,23 @@
         setTimeout(() => {
             state.rows.push({ guess: Array(state.pairCount).fill(null), status: 'active', residue: [] });
             state.activeRow++; renderBoard();
-            const el = document.getElementById('attempts'); 
-            // 平滑滚动到底部
-            setTimeout(() => el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' }), 50);
+            const el = document.getElementById('attempts'); el.scrollTop = el.scrollHeight;
         }, 600);
     }
   }
 
   /* --- 渲染 --- */
   function adjustSize() {
-    // 根据屏幕宽度动态调整杯子大小，确保不换行
-    const w = Math.min(window.innerWidth, 420) - 20; 
-    let sz = Math.floor((w - (state.pairCount - 1) * 8) / state.pairCount);
-    sz = Math.min(50, sz); // 最大限制
-    
-    document.documentElement.style.setProperty('--cup-w', sz + 'px');
-    document.documentElement.style.setProperty('--cup-h', (sz * 1.1) + 'px');
-    document.documentElement.style.setProperty('--candy-sz', (sz * 0.75) + 'px');
+    const w = Math.min(window.innerWidth, 440) - 20; 
+    let sz = (w - (state.pairCount - 1) * 8) / state.pairCount;
+    sz = Math.max(30, Math.min(60, sz));
+    document.documentElement.style.setProperty('--cup-sz', sz + 'px');
+    document.documentElement.style.setProperty('--candy-sz', (sz * 0.8) + 'px');
     document.documentElement.style.setProperty('--count', state.pairCount);
   }
 
   function renderUI() {
     document.getElementById('level').innerText = state.level;
-    document.getElementById('pairs').innerText = state.pairCount;
     renderPalette(); renderBoard();
   }
 
@@ -368,12 +323,17 @@
     const used = new Set(activeRow ? activeRow.guess : []);
     
     state.colors.forEach(cid => {
+        // 外层容器 p-item 负责显示凹槽背景
         const wrap = document.createElement('div'); wrap.className = 'p-item';
+        
         const c = document.createElement('div'); c.className = 'candy palette-candy';
         c.style.setProperty('--bg', COLORS[cid]);
         if (used.has(cid)) c.classList.add('used');
+        c.dataset.cid = cid;
+        
         c.addEventListener('touchstart', (e) => handleTouchStart(e, c, cid), {passive: false});
-        wrap.appendChild(c); p.appendChild(wrap);
+        wrap.appendChild(c);
+        p.appendChild(wrap);
     });
   }
 
@@ -404,8 +364,15 @@
     });
   }
 
-  /* --- 交互 --- */
+  /* --- 交互 (Drag & Ghost Fix) --- */
   let ghost = null, dragId = null, activeColor = null, hoverCup = null, sourceEl = null;
+
+  function cleanupGhost() {
+    if (ghost) ghost.remove();
+    if (sourceEl) sourceEl.classList.remove('dragging-source');
+    if (hoverCup) hoverCup.classList.remove('dropHover');
+    ghost = null; dragId = null; sourceEl = null; hoverCup = null;
+  }
 
   function handleTouchStart(e, el, cid) {
     if(el.classList.contains('used')) return;
@@ -413,6 +380,7 @@
     const t = e.changedTouches[0]; 
     dragId = t.identifier; activeColor = cid; sourceEl = el;
     
+    // 关键：给源元素加class，CSS里控制opacity:0，从而露出下面的凹槽
     sourceEl.classList.add('dragging-source');
 
     ghost = el.cloneNode(true);
@@ -440,40 +408,36 @@
     } else if (hoverCup) { hoverCup.classList.remove('dropHover'); hoverCup = null; }
   }, {passive: false});
 
-  const endDrag = () => {
-    if (ghost) { ghost.remove(); ghost = null; }
-    if (sourceEl) { sourceEl.classList.remove('dragging-source'); sourceEl = null; }
-    dragId = null;
+  const endDrag = (e) => {
+    if (!ghost) return;
+    
     if (hoverCup) {
-        hoverCup.classList.remove('dropHover');
         handleGuess(parseInt(hoverCup.dataset.r), parseInt(hoverCup.dataset.s), activeColor);
-        hoverCup = null;
     }
+    cleanupGhost();
   };
+  
+  // Bug修复：监听页面隐藏和TouchCancel，防止卡死
   document.addEventListener('touchend', endDrag);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) endDrag(); });
+  document.addEventListener('touchcancel', cleanupGhost);
+  document.addEventListener('visibilitychange', () => { if(document.hidden) cleanupGhost(); });
 
-  /* --- 杂项 --- */
+  /* --- 工具 --- */
   const bg = document.getElementById("bgBubbles");
-  for(let i=0;i<15;i++){
+  for(let i=0;i<12;i++){ 
     const b = document.createElement("div"); b.className = "bubble";
-    const size = 10 + Math.random()*20;
+    const size = 10 + Math.random()*30;
     b.style.setProperty("--size", size+"px"); b.style.setProperty("--x", Math.random()*100 + "vw");
-    b.style.setProperty("--dur", (10+Math.random()*15)+"s");
+    b.style.setProperty("--dur", (10+Math.random()*20)+"s");
     bg.appendChild(b);
   }
 
   document.getElementById('soundBtn').onclick = function() {
     state.sound = !state.sound; this.innerText = state.sound ? '🔊' : '🔇';
-    if(state.sound && audioReady) audios.bg.play().catch(()=>{}); else audios.bg.pause();
+    state.sound ? audios.bg.play().catch(()=>{}) : audios.bg.pause();
   };
-  // 绑定重置按钮
-  document.getElementById('resetBtn').onclick = () => {
-      // 简单震动反馈
-      if(navigator.vibrate) navigator.vibrate(50);
-      startLevel();
-  };
-
+  document.getElementById('resetBtn').onclick = () => startLevel();
+  document.getElementById('wipeBtn').onclick = () => { if(confirm('确定清档？')) { localStorage.removeItem(KEY_SAVE); state.level = 1; startLevel(); }};
   window.addEventListener('resize', adjustSize);
   initGame();
   if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(()=>{}));
