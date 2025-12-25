@@ -1,4 +1,4 @@
-const CACHE_NAME = "gummy-match-v6"; // 升级到 v6
+const CACHE_NAME = "gummy-match-v7"; // 升级到 v7
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,15 +9,17 @@ const ASSETS = [
   "./pop.mp3",
   "./rightanswer-95219.mp3"
 ];
-// 下面的代码保持不变
+
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
   self.skipWaiting();
 });
+
 self.addEventListener("activate", (event) => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => (k === CACHE_NAME ? null : caches.delete(k))))));
   self.clients.claim();
 });
+
 self.addEventListener("fetch", (event) => {
   event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
 });
