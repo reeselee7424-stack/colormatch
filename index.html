@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>果汁软糖 - 炫彩版</title>
+  <title>果汁软糖 - 经典回归版</title>
 
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0f172a">
@@ -24,11 +24,10 @@
       font-family: system-ui,-apple-system,sans-serif;
       color:var(--text); overflow:hidden; overscroll-behavior: none;
       
-      /* 维持之前的深邃背景 */
+      /* 保持你喜欢的深蓝背景 */
       background: radial-gradient(circle at 50% 120%, #1e293b 0%, #0f172a 40%, #020617 100%);
     }
 
-    /* 气泡背景 */
     .bg-bubbles{ position:fixed; inset:0; pointer-events:none; z-index:0; }
     .bubble{
       position:absolute; border-radius:50%;
@@ -73,21 +72,23 @@
     }
     .attempts-scroll::-webkit-scrollbar { display: none; }
 
+    /* ===== 回归 v6 版本的糖果行样式 ===== */
     .row-card{
-      display: flex; justify-content: center; padding: 6px;
-      border-radius: 99px;
+      display: flex; justify-content: center; padding: 8px;
+      border-radius: 12px; /* v6 的圆角矩形 */
+      background: rgba(255,255,255,0.03); /* v6 的底色 */
+      border: 1px solid rgba(255,255,255,0.05); /* v6 的边框 */
       flex-shrink: 0;
       transition: all 0.3s;
     }
     .row-card.active{
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 0 30px rgba(0,0,0,0.2);
+      background: rgba(255,255,255,0.06); /* v6 的高亮底色 */
+      border-color: rgba(255,255,255,0.15); /* v6 的高亮边框 */
+      box-shadow: none; /* v6 没有强烈的光晕 */
     }
 
     .slots{ display:grid; gap: 10px; grid-template-columns: repeat(var(--count), var(--cup-sz)); justify-content: center;}
 
-    /* 杯子：极简透明玻璃圈 */
     .cup{
       width: var(--cup-sz); height: var(--cup-sz);
       border-radius: 50%; position:relative; 
@@ -111,13 +112,11 @@
       pointer-events: none;
     }
 
-    /* ===== 糖果样式 ===== */
     .candy{
       width: var(--candy-sz); height: calc(var(--candy-sz) * 0.9);
       border-radius: 50%;
       position:absolute; left:50%; top:50%; transform: translate(-50%, -50%); 
       z-index: 10;
-      /* 基础质感 */
       background: radial-gradient(circle at 40% 30%, rgba(255,255,255,0.3), var(--bg));
       box-shadow: 
         inset 0 3px 5px rgba(255,255,255,0.5), 
@@ -125,7 +124,6 @@
         0 4px 8px rgba(0,0,0,0.3);
       transition: opacity 0.1s, transform 0.1s;
     }
-    /* 高光 */
     .candy::after{
       content:""; position:absolute; left: 20%; top: 15%; width: 35%; height: 25%;
       border-radius: 50%;
@@ -133,18 +131,14 @@
       filter: blur(1px);
     }
     
-    /* 七彩糖果的特殊处理 */
     .candy[data-rainbow="true"] {
         background: conic-gradient(red, orange, yellow, green, cyan, blue, violet, red);
-        /* 给彩虹糖加一层内发光，防止太花 */
         box-shadow: inset 0 0 10px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.7), 0 4px 6px rgba(0,0,0,0.3);
     }
 
     .candy.fade-out { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
 
-    /* ===== 核心修改：底部调色盘与凹槽 (参考图片) ===== */
     .palette-area {
-        /* 蓝色光泽底座 */
         background: linear-gradient(to bottom, #1e3a8a, #0f172a);
         border-top: 1px solid rgba(255,255,255,0.15);
         padding: 15px 0 30px 0;
@@ -163,23 +157,15 @@
         position: relative;
     }
     
-    /* 凹槽：深色、柔和的内陷效果 */
     .p-item::before {
         content:""; position: absolute; 
-        width: 50px; height: 44px; /* 稍微扁一点，像软糖窝 */
-        border-radius: 16px; /* 方圆形凹槽，参考图片风格 */
-        
-        /* 深色背景 + 内阴影 */
+        width: 50px; height: 44px; 
+        border-radius: 16px; 
         background: rgba(0,0,0,0.4);
         box-shadow: inset 0 3px 8px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.05);
     }
 
-    .palette-candy { 
-        position: relative; 
-        transform: scale(0.95); /* 稍微缩小以放入凹槽 */
-    }
-    
-    /* 拖拽时隐藏 */
+    .palette-candy { position: relative; transform: scale(0.95); transition: opacity 0.1s; }
     .palette-candy.is-dragging { opacity: 0; }
     .candy.used { filter: grayscale(1) opacity(0.3); }
 
@@ -223,65 +209,44 @@
 
 <script>
 (() => {
-  /* 4. 新颜色池：满足所有要求 */
   const COLORS = [
-    { hex: "#ff2e2e" }, // 红
-    { hex: "#ff9f0a" }, // 橙
-    { hex: "#ffd60a" }, // 黄
-    { hex: "#30d158" }, // 绿
-    { hex: "#22d3ee" }, // 青 (Cyan)
-    { hex: "#0a84ff" }, // 蓝
-    { hex: "#bf5af2" }, // 紫
-    { hex: "#ff375f" }, // 粉红
-    { hex: "#8d6e63" }, // 棕色
-    { hex: "#2d3436" }, // 黑色
-    { hex: "#f1f5f9" }, // 白色 (带点灰白，否则看不清高光)
-    { hex: "#94a3b8" }, // 灰色
-    { hex: "#0abab5" }, // 蒂芙尼蓝 (Tiffany Blue)
-    { hex: "#008080" }, // 青绿 (Teal)
-    { hex: "rainbow" }  // 七彩 (特殊处理)
+    { hex: "#ff2e2e" }, { hex: "#ff9f0a" }, { hex: "#ffd60a" }, { hex: "#30d158" },
+    { hex: "#22d3ee" }, { hex: "#0a84ff" }, { hex: "#bf5af2" }, { hex: "#ff375f" },
+    { hex: "#8d6e63" }, { hex: "#2d3436" }, { hex: "#f1f5f9" }, { hex: "#94a3b8" },
+    { hex: "#0abab5" }, { hex: "#008080" }, { hex: "rainbow" }
   ];
-  const KEY_SAVE = 'gummy_v12_save';
+  const KEY_SAVE = 'gummy_v13_save'; // 更新版本号以免混淆
   
   let state = { level: 1, pairCount: 3, colors: [], answer: [], rows: [], activeRow: 0, sound: true };
   
-  /* --- 音频系统 (修复无声) --- */
   const audios = { 
     bg: document.getElementById('bg-soda'), 
     pop: document.getElementById('sfx-pop'), 
     correct: document.getElementById('sfx-correct') 
   };
 
-  // 强力解锁：任何交互都尝试激活音频环境
+  // 强力解锁音频 (无开局测试，点击即解锁)
   function unlockAudio() {
-    // 尝试播放并立即暂停所有音频，激活 iOS 音频上下文
     Object.values(audios).forEach(a => {
         a.volume = 0; 
         a.play().then(() => {
-             // 播放成功后立即暂停并恢复音量
             setTimeout(() => { 
                 a.pause(); a.currentTime=0; 
                 if(a.id==='bg-soda') a.volume=0.3; else a.volume=1; 
             }, 10);
-        }).catch(()=>{}); // 忽略自动播放失败的报错
+        }).catch(()=>{});
     });
-    // 只绑定一次
     document.removeEventListener('touchstart', unlockAudio);
     document.removeEventListener('click', unlockAudio);
-    
     if(state.sound) setTimeout(() => audios.bg.play().catch(()=>{}), 500);
   }
-  // 绑定到最基础的交互事件上
   document.addEventListener('touchstart', unlockAudio, {once:true});
   document.addEventListener('click', unlockAudio, {once:true});
 
   function playSound(key) {
     if (!state.sound) return;
     const a = audios[key];
-    if (a) { 
-        a.currentTime=0; a.volume=1; 
-        a.play().catch(e => {}); 
-    }
+    if (a) { a.currentTime=0; a.volume=1; a.play().catch(e => {}); }
   }
 
   /* --- 游戏逻辑 --- */
@@ -297,7 +262,6 @@
   }
   function startLevel() {
     state.pairCount = getPairCount(state.level);
-    // 从新颜色池中随机取色
     const poolIndices = COLORS.map((_, i) => i).sort(() => Math.random() - 0.5);
     state.colors = poolIndices.slice(0, state.pairCount);
     state.answer = [...state.colors].sort(() => Math.random() - 0.5);
@@ -355,30 +319,22 @@
     
     state.colors.forEach(cIdx => {
         const wrap = document.createElement('div'); wrap.className = 'p-item';
-        
         const c = createCandy(cIdx);
         c.className += ' palette-candy';
-        
         if (used.has(cIdx)) c.classList.add('used');
         c.dataset.cid = cIdx;
-        
         c.addEventListener('touchstart', (e) => handleTouchStart(e, c, cIdx), {passive: false});
         wrap.appendChild(c);
         p.appendChild(wrap);
     });
   }
 
-  // 辅助：创建糖果元素，处理颜色和彩虹特效
   function createCandy(colorIdx) {
       const d = document.createElement('div');
       d.className = 'candy';
       const colorData = COLORS[colorIdx];
-      
-      if (colorData.hex === 'rainbow') {
-          d.dataset.rainbow = "true";
-      } else {
-          d.style.setProperty('--bg', colorData.hex);
-      }
+      if (colorData.hex === 'rainbow') d.dataset.rainbow = "true";
+      else d.style.setProperty('--bg', colorData.hex);
       return d;
   }
 
@@ -396,11 +352,8 @@
             
             if (row.residue[sIdx]) {
                 const res = document.createElement('div'); res.className = 'residue-layer';
-                
-                // 处理残留颜色（如果是彩虹，用紫色代替残留）
                 const resColor = row.residue[sIdx] === 'rainbow' ? '#a55eea' : row.residue[sIdx];
-                res.style.setProperty('--c', resColor); 
-                cup.appendChild(res);
+                res.style.setProperty('--c', resColor); cup.appendChild(res);
             }
             if (cIdx !== null) {
                 const c = createCandy(cIdx);
@@ -430,14 +383,11 @@
     dragId = t.identifier; activeColor = cIdx; sourceEl = el;
     
     sourceEl.classList.add('is-dragging');
-
     ghost = el.cloneNode(true);
     ghost.className = 'candy drag-ghost';
     ghost.classList.remove('is-dragging', 'palette-candy');
-    // 需要重新设置背景，因为 clone 可能没带上动态属性
     const colorData = COLORS[cIdx];
     if(colorData.hex !== 'rainbow') ghost.style.setProperty('--bg', colorData.hex);
-
     ghost.style.left = t.clientX + 'px'; ghost.style.top = t.clientY + 'px';
     document.body.appendChild(ghost);
   }
@@ -448,7 +398,6 @@
     if (!t) return;
     e.preventDefault();
     ghost.style.left = t.clientX + 'px'; ghost.style.top = t.clientY + 'px';
-    
     const elUnder = document.elementFromPoint(t.clientX, t.clientY);
     const cup = elUnder ? elUnder.closest('.cup') : null;
     if (cup && parseInt(cup.dataset.r) === state.activeRow) {
@@ -461,22 +410,19 @@
 
   const endDrag = (e) => {
     if (!ghost) return;
-    if (hoverCup) {
-        handleGuess(parseInt(hoverCup.dataset.r), parseInt(hoverCup.dataset.s), activeColor);
-    }
+    if (hoverCup) handleGuess(parseInt(hoverCup.dataset.r), parseInt(hoverCup.dataset.s), activeColor);
     cleanupGhost();
   };
   
   document.addEventListener('touchend', endDrag);
   document.addEventListener('touchcancel', cleanupGhost);
 
-  /* --- 背景 --- */
   const bg = document.getElementById("bgBubbles");
-  for(let i=0;i<6;i++){ 
+  for(let i=0;i<20;i++){ 
     const b = document.createElement("div"); b.className = "bubble";
-    const size = 100 + Math.random()*200;
-    b.style.setProperty("--size", size+"px"); 
-    b.style.setProperty("--x", Math.random()*100 + "vw");
+    const size = 10 + Math.random()*25;
+    b.style.setProperty("--size", size+"px"); b.style.setProperty("--x", Math.random()*100 + "vw");
+    b.style.setProperty("--dur", (10+Math.random()*20)+"s");
     b.style.setProperty("--delay", (-Math.random()*20)+"s");
     bg.appendChild(b);
   }
