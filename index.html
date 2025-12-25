@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>果汁软糖 - 果冻质感版</title>
+  <title>果汁软糖 - 极速冷酷版</title>
 
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#0b1330">
   <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
   <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,32 +14,33 @@
 
   <style>
     :root{
-      --text: #e2e8f0;
-      --cup-sz: 58px; 
-      --candy-sz: 48px; 
+      --text:#e5e7eb;
+      --blue:rgba(59,130,246,0.8);
+      
+      /* 动态变量 */
+      --cup-sz: 50px; 
+      --candy-w: 86%; 
+      --candy-h: 68%; 
     }
 
     body{
       margin:0; height:100vh; display:flex; justify-content:center;
       font-family: system-ui,-apple-system,sans-serif;
       color:var(--text); overflow:hidden; overscroll-behavior: none;
-      
-      /* 深蓝背景 */
-      background: radial-gradient(circle at 50% 120%, #1e293b 0%, #0f172a 40%, #020617 100%);
+      /* 简化背景，减少绘制开销 */
+      background: radial-gradient(circle at 50% 30%, #1e293b 0%, #0f172a 100%);
     }
 
+    /* 泡泡数量减少，动画简化 */
     .bg-bubbles{ position:fixed; inset:0; pointer-events:none; z-index:0; }
     .bubble{
       position:absolute; border-radius:50%;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.03), transparent 70%);
+      background: rgba(255,255,255,0.05);
+      animation: rise linear infinite;
       bottom:-50px; left: var(--x); width: var(--size); height: var(--size);
-      animation: float 20s infinite ease-in-out; 
-      animation-delay: var(--delay);
+      animation-duration: var(--dur);
     }
-    @keyframes float { 
-        0%, 100% { transform: translate(0, 0); opacity: 0.3; }
-        50% { transform: translate(20px, -40px); opacity: 0.6; }
-    }
+    @keyframes rise{ to{ transform: translateY(-110vh); } }
 
     .app-container {
       width: 100%; max-width: 440px; height: 100%;
@@ -48,145 +49,95 @@
     }
 
     header{
-      padding: 12px 20px; display:flex; justify-content:space-between; align-items:center;
-      background: linear-gradient(to bottom, rgba(15, 23, 42, 0.8), transparent);
+      padding: 10px 16px; display:flex; justify-content:space-between; align-items:center;
+      background: rgba(15, 23, 42, 0.8); border-bottom: 1px solid rgba(255,255,255,0.1);
     }
-    h1{ margin:0; font-size:16px; font-weight: 600; letter-spacing: 1px; color: #fff; }
-    
-    .status-bar{ font-size:13px; color: #94a3b8; display:flex; gap:12px; }
-    .status-bar span { color:#fff; font-weight: bold; }
+    h1{ margin:0; font-size:16px; font-weight: 600; }
+    .status-bar{ font-size:12px; color: #94a3b8; display:flex; gap:10px; }
+    .status-bar span { color:#fff; }
 
-    .controls { display: flex; gap: 10px; padding: 0 16px; justify-content: flex-end; }
+    .controls { display: flex; gap: 8px; padding: 8px 16px; justify-content: flex-end; }
     .btn{
-      background:rgba(255, 255, 255, 0.08); color:#cbd5e1; 
+      background:rgba(30, 41, 59, 0.9); color:#fff; 
       border:1px solid rgba(255,255,255,0.1);
-      padding:6px 14px; border-radius:20px; font-size: 12px; cursor: pointer;
-      backdrop-filter: blur(4px);
+      padding:6px 12px; border-radius:6px; font-size: 12px; cursor: pointer;
     }
 
-    .game-area { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 20px 10px; }
+    .game-area { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 10px; }
     .attempts-scroll {
-        flex: 1; overflow-y: auto; padding: 10px 0;
-        display: flex; flex-direction: column; gap: 14px;
+        flex: 1; overflow-y: auto; padding: 10px 4px;
+        display: flex; flex-direction: column; gap: 10px;
         scroll-behavior: smooth;
     }
-    .attempts-scroll::-webkit-scrollbar { display: none; }
-
+    
     .row-card{
-      display: flex; justify-content: center; padding: 6px;
-      border-radius: 99px;
+      display: flex; justify-content: center; padding: 8px;
+      border-radius: 12px; background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
       flex-shrink: 0;
-      transition: all 0.3s;
     }
     .row-card.active{
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 0 30px rgba(0,0,0,0.2);
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.15);
     }
 
-    .slots{ display:grid; gap: 10px; grid-template-columns: repeat(var(--count), var(--cup-sz)); justify-content: center;}
+    .slots{ display:grid; gap: 6px; grid-template-columns: repeat(var(--count), var(--cup-sz)); }
 
-    /* 杯子 */
+    /* ===== 杯子 (性能优化版) ===== */
+    /* 移除了 backdrop-filter，改用透明度模拟 */
     .cup{
-      width: var(--cup-sz); height: var(--cup-sz);
-      border-radius: 50%; position:relative; 
-      border: 1px solid rgba(255,255,255,0.15);
-      background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.2) 100%);
-      box-shadow: inset 0 2px 4px rgba(255,255,255,0.05), inset 0 -2px 6px rgba(0,0,0,0.3);
+      width: var(--cup-sz); height: calc(var(--cup-sz) * 0.92);
+      border-radius:999px; position:relative; overflow:hidden;
+      background: rgba(255,255,255,0.05); /* 替代 blur */
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: inset 0 5px 10px rgba(0,0,0,0.2);
     }
-    .cup.dropHover{ border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); }
+    /* 杯口反光 */
+    .cup::before{
+      content:""; position:absolute; inset:4px; border-radius:999px;
+      border:1px solid rgba(255,255,255,0.15); pointer-events:none; z-index: 4;
+    }
+    .cup.dropHover{ background: rgba(59,130,246,0.2); border-color: #60a5fa; }
 
+    /* ===== 核心修改：残留层 (内缩) ===== */
+    /* inset: 6px 保证颜色只在杯子肚子里，不碰到玻璃壁 */
     .residue-layer {
-      position: absolute; inset: 2px; border-radius: 50%;
-      background: var(--c); opacity: 0.6; 
-      mask-image: radial-gradient(circle, black 40%, transparent 80%);
-      -webkit-mask-image: radial-gradient(circle, black 40%, transparent 80%);
-      pointer-events: none;
+      position: absolute; inset: 6px; 
+      background: var(--c); opacity: 0.7;
+      border-radius: 50%; z-index: 1; pointer-events: none;
+      /* 简单的径向渐变代替 heavy blur */
+      background-image: radial-gradient(circle, var(--c) 40%, transparent 80%);
     }
 
-    /* ===== 核心修改：果冻软糖质感 (参考图) ===== */
+    /* ===== 软糖 ===== */
     .candy{
-      width: var(--candy-sz); height: calc(var(--candy-sz) * 0.92);
-      /* 形状：方圆/馒头形 */
-      border-radius: 35% 35% 45% 45%; 
-      position:absolute; left:50%; top:50%; transform: translate(-50%, -50%); 
-      z-index: 10;
-      
-      /* 1. 基础色 + 内部透光 */
-      background: radial-gradient(130% 130% at 30% 20%, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.1) 20%, var(--bg) 60%, rgba(0,0,0,0.3) 100%);
-      
-      /* 2. 边缘厚度感 */
-      box-shadow: 
-        inset 0 -4px 6px rgba(0,0,0,0.2), /* 底部厚度 */
-        0 4px 8px rgba(0,0,0,0.3); /* 投影 */
-        
-      transition: opacity 0.1s, transform 0.1s;
+      width: var(--candy-w); height: var(--candy-h);
+      border-radius:999px; position:absolute; left:50%; top:50%;
+      transform: translate(-50%, -50%); z-index: 10;
+      /* 简化阴影 */
+      box-shadow: inset 0 4px 8px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.3);
+      background: linear-gradient(135deg, var(--bg), rgba(0,0,0,0.2));
     }
-    
-    /* 3. 强烈的高光 (湿润感) */
-    .candy::after{
-      content:""; position:absolute; left: 15%; top: 15%; width: 35%; height: 25%;
-      border-radius: 50%;
-      background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.2));
-      filter: blur(1px);
-    }
-    /* 4. 二次高光 */
-    .candy::before{
-      content:""; position:absolute; right: 20%; bottom: 20%; width: 15%; height: 15%;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.4);
-      filter: blur(2px);
-    }
-    
-    /* 七彩糖果 */
-    .candy[data-rainbow="true"] {
-        background: conic-gradient(from 180deg, red, orange, yellow, green, cyan, blue, violet, red);
-        box-shadow: inset 0 0 10px rgba(255,255,255,0.5), 0 4px 8px rgba(0,0,0,0.3);
-    }
+    .candy.fade-out { opacity: 0; transition: opacity 0.3s; }
 
-    .candy.fade-out { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-
-    /* ===== 底部调色盘与“阴影坑” ===== */
+    /* 底部调色盘 */
     .palette-area {
-        background: linear-gradient(to bottom, #1e3a8a, #0f172a);
-        border-top: 1px solid rgba(255,255,255,0.1);
-        padding: 15px 0 30px 0;
-        position: relative;
+      background: #0f172a; padding: 10px 0 20px 0; border-top: 1px solid rgba(255,255,255,0.1);
     }
+    .palette-scroll { display:flex; gap:10px; padding:0 16px; overflow-x:auto; height: 60px; align-items:center; }
+    .p-item { width: 50px; height: 50px; flex-shrink: 0; display:flex; justify-content:center; align-items:center; }
     
-    .palette-scroll { 
-        display:flex; gap:12px; padding:0 20px; overflow-x:auto; height: 70px; align-items:center; 
-        justify-content: center; 
-    }
+    .palette-candy { position: relative; left: auto; top: auto; transform: none; width: 100%; height: 100%; }
     
-    /* 外层容器：负责显示“阴影/凹槽” */
-    .p-item { 
-        width: 56px; height: 56px; flex-shrink: 0; 
-        display:flex; justify-content:center; align-items:center; 
-        position: relative;
-        
-        /* 核心：这里模拟“空槽”的半透明阴影 */
-        border-radius: 35% 35% 45% 45%; /* 形状和糖果一致 */
-        background: rgba(0,0,0,0.25); /* 半透明黑 */
-        box-shadow: inset 0 2px 6px rgba(0,0,0,0.4); /* 内陷感 */
-    }
-
-    .palette-candy { 
-        position: relative; 
-        /* 盖住底下的阴影 */
-        transform: scale(1); 
-    }
-    
-    /* 拖拽时：隐藏源糖果 -> 露出底下的 .p-item 背景 */
-    .palette-candy.is-dragging { opacity: 0; }
+    /* 关键：被拖拽时隐藏原身 */
+    .palette-candy.dragging-source { opacity: 0; }
     
     .candy.used { filter: grayscale(1) opacity(0.3); }
 
     .drag-ghost {
       position: fixed; pointer-events: none; z-index: 9999;
-      width: 50px; height: 46px; opacity: 1;
-      transform: translate(-50%, -50%) scale(1.15);
-      filter: drop-shadow(0 15px 15px rgba(0,0,0,0.4));
+      width: 54px; height: 40px; opacity: 0.9;
+      transform: translate(-50%, -50%) scale(1.1);
     }
   </style>
 </head>
@@ -194,22 +145,20 @@
 <body>
   <div class="bg-bubbles" id="bgBubbles"></div>
 
-  <audio id="bg-soda" loop src="soda.mp3" preload="auto"></audio>
-  <audio id="sfx-pop" src="pop.mp3" preload="auto"></audio>
-  <audio id="sfx-correct" src="correct.mp3" preload="auto"></audio>
-
   <div class="app-container">
     <header>
-        <h1>果汁软糖配对</h1>
+        <h1>🍬 果汁软糖</h1>
         <div class="status-bar">
-            <span>第 <span id="level">1</span> 关</span>
-        </div>
-        <div class="controls">
-            <button class="btn" id="soundBtn">🔇</button>
-            <button class="btn" id="resetBtn">重置</button>
-            <button class="btn" id="wipeBtn" style="color:#fca5a5; border-color:rgba(239,68,68,0.4)">清档</button>
+            <div>关卡 <span id="level">1</span></div>
+            <div>配对 <span id="pairs">3</span></div>
         </div>
     </header>
+    
+    <div class="controls">
+        <button class="btn" id="soundBtn">🔇</button>
+        <button class="btn" id="resetBtn">↺ 重置</button>
+        <button class="btn" id="wipeBtn" style="color:#fca5a5; border-color:rgba(239,68,68,0.3)">⚠ 清档</button>
+    </div>
 
     <div class="game-area">
         <div class="attempts-scroll" id="attempts"></div>
@@ -220,39 +169,44 @@
     </div>
   </div>
 
+  <audio id="bg-soda" loop src="soda.mp3" preload="auto"></audio>
+  <audio id="sfx-pop" src="pop.mp3" preload="auto"></audio>
+  <audio id="sfx-correct" src="rightanswer-95219.mp3" preload="auto"></audio>
+
 <script>
 (() => {
-  /* 颜色池 (15色) */
-  const COLORS = [
-    { hex: "#ff2e2e" }, { hex: "#ff9f0a" }, { hex: "#ffd60a" }, { hex: "#30d158" },
-    { hex: "#22d3ee" }, { hex: "#0a84ff" }, { hex: "#bf5af2" }, { hex: "#ff375f" },
-    { hex: "#8d6e63" }, { hex: "#2d3436" }, { hex: "#f1f5f9" }, { hex: "#94a3b8" },
-    { hex: "#0abab5" }, { hex: "#008080" }, { hex: "rainbow" }
-  ];
-  const KEY_SAVE = 'gummy_v14_save';
+  const COLORS = ["#ef4444", "#f97316", "#fde047", "#16a34a", "#22d3ee", "#1d4ed8", "#a855f7", "#fb7185", "#5b341a", "#9ca3af", "#84cc16", "#4338ca", "#e11d48", "#14532d"];
+  const KEY_SAVE = 'gummy_v6_save';
   
-  let state = { level: 1, pairCount: 3, colors: [], answer: [], rows: [], activeRow: 0, sound: true };
+  let state = { level: 1, pairCount: 3, colors: [], answer: [], rows: [], activeRow: 0, sound: true }; // 默认开启声音逻辑，但需点击激活
   
+  /* --- 音频系统 (修复延迟) --- */
   const audios = { 
     bg: document.getElementById('bg-soda'), 
     pop: document.getElementById('sfx-pop'), 
     correct: document.getElementById('sfx-correct') 
   };
+  let audioUnlocked = false;
 
-  // 强力解锁：任意交互激活音频
+  // 核心：首次点击屏幕时解锁音频上下文
   function unlockAudio() {
+    if (audioUnlocked) return;
+    // 播放所有音频一瞬间（静音），强制激活
     Object.values(audios).forEach(a => {
-        a.volume = 0; 
-        a.play().then(() => {
-            setTimeout(() => { 
-                a.pause(); a.currentTime=0; 
-                if(a.id==='bg-soda') a.volume=0.3; else a.volume=1; 
-            }, 10);
-        }).catch(()=>{});
+        a.volume = 0;
+        a.play().catch(()=>{});
+        setTimeout(() => { 
+            a.pause(); 
+            a.currentTime = 0; 
+            if(a.id === 'bg-soda') a.volume = 0.3; else a.volume = 1; 
+        }, 100);
     });
+    audioUnlocked = true;
     document.removeEventListener('touchstart', unlockAudio);
     document.removeEventListener('click', unlockAudio);
-    if(state.sound) setTimeout(() => audios.bg.play().catch(()=>{}), 500);
+    
+    // 如果状态是开启，延迟播放背景音
+    if(state.sound) setTimeout(() => audios.bg.play().catch(()=>{}), 200);
   }
   document.addEventListener('touchstart', unlockAudio, {once:true});
   document.addEventListener('click', unlockAudio, {once:true});
@@ -260,7 +214,11 @@
   function playSound(key) {
     if (!state.sound) return;
     const a = audios[key];
-    if (a) { a.currentTime=0; a.volume=1; a.play().catch(e => {}); }
+    if (a) {
+        a.currentTime = 0;
+        a.volume = 1;
+        a.play().catch(e => console.log('Audio blocked', e));
+    }
   }
 
   /* --- 游戏逻辑 --- */
@@ -276,20 +234,20 @@
   }
   function startLevel() {
     state.pairCount = getPairCount(state.level);
-    const poolIndices = COLORS.map((_, i) => i).sort(() => Math.random() - 0.5);
-    state.colors = poolIndices.slice(0, state.pairCount);
+    const pool = COLORS.map((_, i) => i).sort(() => Math.random() - 0.5);
+    state.colors = pool.slice(0, state.pairCount);
     state.answer = [...state.colors].sort(() => Math.random() - 0.5);
     state.rows = [{ guess: Array(state.pairCount).fill(null), status: 'active', residue: [] }];
     state.activeRow = 0;
     renderUI(); adjustSize();
   }
 
-  function handleGuess(rowIdx, slotIdx, colorIdx) {
+  function handleGuess(rowIdx, slotIdx, colorId) {
     const row = state.rows[rowIdx];
     if (row.status !== 'active') return;
-    const existIdx = row.guess.indexOf(colorIdx);
+    const existIdx = row.guess.indexOf(colorId);
     if (existIdx !== -1 && existIdx !== slotIdx) row.guess[existIdx] = null;
-    row.guess[slotIdx] = colorIdx;
+    row.guess[slotIdx] = colorId;
     renderBoard();
     if (row.guess.every(c => c !== null)) checkRow(row);
   }
@@ -297,32 +255,38 @@
   function checkRow(row) {
     const isCorrect = row.guess.every((c, i) => c === state.answer[i]);
     if (isCorrect) {
-        row.status = 'win'; playSound('correct'); renderBoard();
+        row.status = 'win';
+        playSound('correct');
+        renderBoard();
         setTimeout(() => { state.level++; localStorage.setItem(KEY_SAVE, state.level); startLevel(); }, 1200);
     } else {
-        row.status = 'bad'; playSound('pop');
-        row.guess.forEach((cIdx, i) => { if (cIdx !== state.answer[i]) row.residue[i] = COLORS[cIdx].hex; });
+        row.status = 'bad';
+        playSound('pop');
+        row.guess.forEach((cid, i) => { if (cid !== state.answer[i]) row.residue[i] = COLORS[cid]; });
         renderBoard();
         setTimeout(() => {
             state.rows.push({ guess: Array(state.pairCount).fill(null), status: 'active', residue: [] });
-            state.activeRow++; renderBoard();
+            state.activeRow++;
+            renderBoard();
             const el = document.getElementById('attempts'); el.scrollTop = el.scrollHeight;
-        }, 600);
+        }, 500);
     }
   }
 
   /* --- 渲染 --- */
   function adjustSize() {
-    const w = Math.min(window.innerWidth, 440) - 20; 
-    let sz = (w - (state.pairCount - 1) * 8) / state.pairCount;
-    sz = Math.max(34, Math.min(68, sz));
+    const w = Math.min(window.innerWidth, 440) - 24; 
+    let sz = (w - (state.pairCount - 1) * 6) / state.pairCount;
+    sz = Math.max(30, Math.min(65, sz));
     document.documentElement.style.setProperty('--cup-sz', sz + 'px');
-    document.documentElement.style.setProperty('--candy-sz', (sz * 0.82) + 'px');
     document.documentElement.style.setProperty('--count', state.pairCount);
+    if (sz < 40) { document.documentElement.style.setProperty('--candy-w', '90%'); document.documentElement.style.setProperty('--candy-h', '80%'); }
+    else { document.documentElement.style.setProperty('--candy-w', '86%'); document.documentElement.style.setProperty('--candy-h', '68%'); }
   }
 
   function renderUI() {
     document.getElementById('level').innerText = state.level;
+    document.getElementById('pairs').innerText = state.pairCount;
     renderPalette(); renderBoard();
   }
 
@@ -331,28 +295,18 @@
     const activeRow = state.rows[state.activeRow];
     const used = new Set(activeRow ? activeRow.guess : []);
     
-    state.colors.forEach(cIdx => {
+    state.colors.forEach(cid => {
         const wrap = document.createElement('div'); wrap.className = 'p-item';
+        const c = document.createElement('div'); c.className = 'candy palette-candy';
+        c.style.setProperty('--bg', COLORS[cid]);
+        if (used.has(cid)) c.classList.add('used');
+        // 标记ID以便拖拽时寻找
+        c.dataset.cid = cid;
         
-        const c = createCandy(cIdx);
-        c.className += ' palette-candy';
-        
-        if (used.has(cIdx)) c.classList.add('used');
-        c.dataset.cid = cIdx;
-        
-        c.addEventListener('touchstart', (e) => handleTouchStart(e, c, cIdx), {passive: false});
+        c.addEventListener('touchstart', (e) => handleTouchStart(e, c, cid), {passive: false});
         wrap.appendChild(c);
         p.appendChild(wrap);
     });
-  }
-
-  function createCandy(colorIdx) {
-      const d = document.createElement('div');
-      d.className = 'candy';
-      const colorData = COLORS[colorIdx];
-      if (colorData.hex === 'rainbow') d.dataset.rainbow = "true";
-      else d.style.setProperty('--bg', colorData.hex);
-      return d;
   }
 
   function renderBoard() {
@@ -363,19 +317,18 @@
         const slots = document.createElement('div'); slots.className = 'slots';
         
         for(let sIdx=0; sIdx<state.pairCount; sIdx++) {
-            const cIdx = row.guess[sIdx];
+            const cid = row.guess[sIdx];
             const cup = document.createElement('div');
             cup.className = 'cup'; cup.dataset.r = rIdx; cup.dataset.s = sIdx;
             
             if (row.residue[sIdx]) {
                 const res = document.createElement('div'); res.className = 'residue-layer';
-                const resColor = row.residue[sIdx] === 'rainbow' ? '#a55eea' : row.residue[sIdx];
-                res.style.setProperty('--c', resColor); cup.appendChild(res);
+                res.style.setProperty('--c', row.residue[sIdx]); cup.appendChild(res);
             }
-            if (cIdx !== null) {
-                const c = createCandy(cIdx);
-                if (row.status === 'bad' && cIdx !== state.answer[sIdx]) c.classList.add('fade-out');
-                cup.appendChild(c);
+            if (cid !== null) {
+                const c = document.createElement('div');
+                c.className = (row.status === 'bad' && cid !== state.answer[sIdx]) ? 'candy fade-out' : 'candy';
+                c.style.setProperty('--bg', COLORS[cid]); cup.appendChild(c);
             }
             slots.appendChild(cup);
         }
@@ -383,31 +336,22 @@
     });
   }
 
-  /* --- 交互 --- */
+  /* --- 交互 (优化拖拽) --- */
   let ghost = null, dragId = null, activeColor = null, hoverCup = null, sourceEl = null;
 
-  function cleanupGhost() {
-    if (ghost) ghost.remove();
-    if (sourceEl) sourceEl.classList.remove('is-dragging');
-    if (hoverCup) hoverCup.classList.remove('dropHover');
-    ghost = null; dragId = null; sourceEl = null; hoverCup = null;
-  }
-
-  function handleTouchStart(e, el, cIdx) {
-    if(el.classList.contains('used')) return;
+  function handleTouchStart(e, el, cid) {
+    if(el.classList.contains('used')) return; // 已使用的不能拖（如果需要限制的话，目前是允许改的）
     e.preventDefault();
     const t = e.changedTouches[0]; 
-    dragId = t.identifier; activeColor = cIdx; sourceEl = el;
+    dragId = t.identifier; activeColor = cid; sourceEl = el;
     
-    sourceEl.classList.add('is-dragging');
+    // 隐藏源元素，模拟“拿走”
+    sourceEl.classList.add('dragging-source');
 
     ghost = el.cloneNode(true);
     ghost.className = 'candy drag-ghost';
-    ghost.classList.remove('is-dragging', 'palette-candy');
-    
-    const colorData = COLORS[cIdx];
-    if(colorData.hex !== 'rainbow') ghost.style.setProperty('--bg', colorData.hex);
-
+    ghost.classList.remove('dragging-source', 'palette-candy'); // 移除多余类
+    ghost.style.setProperty('--bg', COLORS[cid]);
     ghost.style.left = t.clientX + 'px'; ghost.style.top = t.clientY + 'px';
     document.body.appendChild(ghost);
   }
@@ -431,22 +375,27 @@
 
   const endDrag = (e) => {
     if (!ghost) return;
-    if (hoverCup) {
-        handleGuess(parseInt(hoverCup.dataset.r), parseInt(hoverCup.dataset.s), activeColor);
-    }
-    cleanupGhost();
-  };
-  
-  document.addEventListener('touchend', endDrag);
-  document.addEventListener('touchcancel', cleanupGhost);
+    ghost.remove(); ghost = null; dragId = null;
+    
+    // 恢复源元素显示
+    if(sourceEl) sourceEl.classList.remove('dragging-source');
+    sourceEl = null;
 
+    if (hoverCup) {
+        hoverCup.classList.remove('dropHover');
+        handleGuess(parseInt(hoverCup.dataset.r), parseInt(hoverCup.dataset.s), activeColor);
+        hoverCup = null;
+    }
+  };
+  document.addEventListener('touchend', endDrag);
+
+  /* --- 工具 --- */
   const bg = document.getElementById("bgBubbles");
-  for(let i=0;i<20;i++){ 
+  for(let i=0;i<10;i++){ // 减少气泡数量
     const b = document.createElement("div"); b.className = "bubble";
-    const size = 10 + Math.random()*25;
+    const size = 10 + Math.random()*20;
     b.style.setProperty("--size", size+"px"); b.style.setProperty("--x", Math.random()*100 + "vw");
-    b.style.setProperty("--dur", (10+Math.random()*20)+"s");
-    b.style.setProperty("--delay", (-Math.random()*20)+"s");
+    b.style.setProperty("--dur", (15+Math.random()*15)+"s");
     bg.appendChild(b);
   }
 
