@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>果汁软糖 - 质感回归版</title>
+  <title>果汁软糖 - 流畅版</title>
 
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0b1330">
@@ -18,7 +18,7 @@
       --panel:rgba(17,24,39,.65);
       --blue:rgba(59,130,246,.95);
       
-      /* 动态变量：默认值 */
+      /* 动态变量 */
       --cup-sz: 50px; 
       --candy-w: 86%; 
       --candy-h: 68%; 
@@ -34,14 +34,14 @@
       overflow:hidden;
       overscroll-behavior: none;
       
-      /* ===== 回归：高级背景 ===== */
+      /* 高级深色背景 */
       background:
         radial-gradient(900px 520px at 35% 10%, rgba(255,255,255,.16), transparent 55%),
         radial-gradient(820px 520px at 75% 15%, rgba(255,255,255,.10), transparent 58%),
         linear-gradient(180deg,#0b1330 0%,#0b2a3a 40%,#0a3a4a 70%,#0a2b43 100%);
     }
 
-    /* ===== 背景泡泡 ===== */
+    /* 背景气泡 (保留氛围感，不影响性能) */
     .bg-bubbles{ position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:0; }
     .bubble{
       position:absolute; bottom:-60px; border-radius:50%;
@@ -55,10 +55,10 @@
     @keyframes rise{ from{ transform: translateY(0); } to{ transform: translateY(-110vh); } }
     @keyframes sway{ 0%,100%{ margin-left:0; } 50%{ margin-left:var(--sx); } }
 
-    /* ===== App 容器 ===== */
+    /* App 容器 */
     .app-container {
       width: 100%;
-      max-width: 440px; /* 限制手机宽度 */
+      max-width: 440px; 
       height: 100%;
       position: relative;
       display: flex;
@@ -94,10 +94,7 @@
         display: flex; flex-direction: column; gap: 12px;
         scroll-behavior: smooth;
     }
-    .attempts-scroll::-webkit-scrollbar{ width:4px; }
-    .attempts-scroll::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.2); border-radius:4px; }
-
-    /* 行 */
+    
     .row-card{
       display: flex; justify-content: center;
       padding: 10px;
@@ -115,14 +112,13 @@
 
     .slots{ display:grid; gap: 6px; grid-template-columns: repeat(var(--count), var(--cup-sz)); }
 
-    /* ===== 回归：高级玻璃杯 ===== */
+    /* ===== 杯子 (保持高级质感) ===== */
     .cup{
       width: var(--cup-sz); 
       height: calc(var(--cup-sz) * 0.92);
       border-radius:999px;
       position:relative; overflow:hidden;
       
-      /* 玻璃质感 */
       background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
       border: 1px solid rgba(255,255,255,.25);
       box-shadow:
@@ -131,60 +127,37 @@
         0 8px 16px rgba(0,0,0,.25);
       backdrop-filter: blur(1px);
     }
-    /* 杯口高光 */
     .cup::before{
       content:""; position:absolute; inset:6px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.18); opacity:.8; pointer-events:none; z-index: 2;
+      border:1px solid rgba(255,255,255,.18); opacity:.8; pointer-events:none; z-index: 3;
     }
-    /* 杯身反光 */
     .cup::after{
       content:""; position:absolute; left:10px; top:10px;
       width:30%; height:60%; border-radius:999px;
       background: linear-gradient(180deg, rgba(255,255,255,.25), transparent);
-      opacity:.7; pointer-events:none; filter: blur(1px); z-index: 2;
+      opacity:.7; pointer-events:none; filter: blur(1px); z-index: 3;
     }
     .cup.dropHover{ outline: 2px solid var(--blue); outline-offset: 2px; }
 
-    /* ===== 回归：泼墨残留 (Residue) ===== */
-    .cup .residue-layer {
-      position: absolute; inset: 0;
-      background: 
-        radial-gradient(circle at 50% 70%, var(--c) 0%, transparent 60%),
-        radial-gradient(circle at 30% 40%, var(--c) 0%, transparent 40%);
-      opacity: 0.6;
-      filter: blur(6px);
-      z-index: 1;
+    /* ===== 核心修改：静态残留层 (Residue) ===== */
+    /* 取代了之前的 splat 动画，性能极好，直接显示模糊颜色 */
+    .residue-layer {
+      position: absolute; 
+      inset: 0;
+      background: var(--c);
+      opacity: 0.65;
+      filter: blur(8px); /* 关键：模拟混浊液体效果 */
+      z-index: 1; /* 在杯底 */
+      border-radius: 50%;
       pointer-events: none;
-      /* 简单的进场动画 */
-      animation: stain 0.5s ease-out forwards;
-    }
-    @keyframes stain { from { opacity: 0; transform: scale(0.8); } to { opacity: 0.6; transform: scale(1); } }
-
-    /* ===== 泼墨爆开效果 (Splat) ===== */
-    .splat {
-        position: absolute; inset: 10%;
-        background: var(--c);
-        mask-image: radial-gradient(circle, black 40%, transparent 70%);
-        -webkit-mask-image: radial-gradient(circle, black 40%, transparent 70%);
-        border-radius: 50%;
-        opacity: 0;
-        z-index: 5;
-        animation: splatter 0.4s ease-out forwards;
-        pointer-events: none;
-    }
-    @keyframes splatter {
-        0% { transform: scale(0.2); opacity: 0.9; }
-        50% { opacity: 0.8; }
-        100% { transform: scale(1.5); opacity: 0; }
     }
 
-    /* ===== 回归：高级软糖 ===== */
+    /* ===== 软糖 ===== */
     .candy{
       width: var(--candy-w); height: var(--candy-h);
       border-radius:999px;
       position:absolute; left:50%; top:50%; transform: translate(-50%, -50%);
       z-index: 10;
-      
       border:1px solid rgba(255,255,255,.25);
       box-shadow:
         inset 0 6px 10px rgba(255,255,255,.25),
@@ -199,8 +172,12 @@
       transform: rotate(-15deg); pointer-events:none;
     }
     
-    .candy.pop-anim { animation: pop-candy 0.3s ease-in forwards; }
-    @keyframes pop-candy { to { transform: translate(-50%, 10px) scale(0.1); opacity: 0; } }
+    /* 简单的消失过渡，不用复杂动画 */
+    .candy.fade-out {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+        transition: all 0.3s ease-out;
+    }
 
     /* 底部调色盘 */
     .palette-area {
@@ -216,14 +193,12 @@
     .palette-candy { position: relative; left: auto; top: auto; transform: none; width: 100%; height: 100%; }
     .candy.used { opacity: 0.4; filter: grayscale(0.6) brightness(0.8); }
 
-    /* 拖拽幻影 */
     .drag-ghost {
       position: fixed; pointer-events: none; z-index: 9999;
       width: 54px; height: 40px; opacity: 0.9;
       transform: translate(-50%, -50%) scale(1.1);
       box-shadow: 0 10px 20px rgba(0,0,0,0.4);
     }
-
   </style>
 </head>
 
@@ -265,7 +240,7 @@
     "#ef4444", "#f97316", "#fde047", "#16a34a", "#22d3ee", "#1d4ed8", "#a855f7", 
     "#fb7185", "#5b341a", "#9ca3af", "#84cc16", "#4338ca", "#e11d48", "#14532d"
   ];
-  const KEY_SAVE = 'gummy_v4_save';
+  const KEY_SAVE = 'gummy_v5_save';
   
   let state = {
     level: 1, pairCount: 3, colors: [], answer: [],
@@ -295,7 +270,7 @@
     state.rows = [{ 
         guess: Array(state.pairCount).fill(null), 
         status: 'active',
-        residue: Array(state.pairCount).fill(null) // 回归：记录残留颜色
+        residue: Array(state.pairCount).fill(null)
     }];
     state.activeRow = 0;
 
@@ -318,29 +293,26 @@
     
     if (isCorrect) {
         row.status = 'win';
-        playSound('correct');
+        playSound('correct'); // 播放 rightanswer-95219.mp3
         renderBoard();
         setTimeout(() => {
             state.level++; localStorage.setItem(KEY_SAVE, state.level);
             startLevel();
-        }, 1000);
+        }, 1200);
     } else {
         row.status = 'bad';
-        playSound('pop');
+        playSound('pop'); // 播放 pop.mp3
         
-        // 核心修改：计算残留 (Residue)
+        // 核心：直接设置残留颜色，没有任何动画计算
         row.guess.forEach((cid, i) => {
-            const isRight = (cid === state.answer[i]);
-            // 如果错了，就把这个颜色留在杯子里 (residue)
-            // 如果之前已经有残留，这里保留之前的还是新的？通常是叠加或保留最新的
-            if (!isRight) {
+            if (cid !== state.answer[i]) {
                 row.residue[i] = COLORS[cid]; 
             }
         });
 
-        renderBoard(); // 触发渲染，显示 residue 和 splat
+        renderBoard(); // 立即显示模糊效果
         
-        // 延时进入下一行
+        // 快速进入下一行，不等待动画
         setTimeout(() => {
             state.rows.push({ 
                 guess: Array(state.pairCount).fill(null), 
@@ -351,7 +323,7 @@
             renderBoard();
             const el = document.getElementById('attempts');
             el.scrollTop = el.scrollHeight;
-        }, 600); // 稍微给点时间看爆炸效果
+        }, 500); 
     }
   }
 
@@ -363,7 +335,6 @@
     sz = Math.max(30, Math.min(65, sz));
     document.documentElement.style.setProperty('--cup-sz', sz + 'px');
     document.documentElement.style.setProperty('--count', state.pairCount);
-    // 动态调整糖果内边距
     if (sz < 40) {
         document.documentElement.style.setProperty('--candy-w', '90%');
         document.documentElement.style.setProperty('--candy-h', '80%');
@@ -417,14 +388,13 @@
         const slots = document.createElement('div');
         slots.className = 'slots';
         
-        // 遍历每一格
         for(let sIdx=0; sIdx<state.pairCount; sIdx++) {
             const cid = row.guess[sIdx];
             const cup = document.createElement('div');
             cup.className = 'cup';
             cup.dataset.r = rIdx; cup.dataset.s = sIdx;
 
-            // 1. 渲染残留 (Residue) - 永远在底层
+            // 1. 渲染残留 (Residue) - 静态模糊层，不消耗性能
             if (row.residue[sIdx]) {
                 const resLayer = document.createElement('div');
                 resLayer.className = 'residue-layer';
@@ -432,32 +402,18 @@
                 cup.appendChild(resLayer);
             }
 
-            // 2. 渲染错误爆炸 (Splat) - 只在刚出错的那一瞬间显示
-            if (row.status === 'bad' && cid !== null && cid !== state.answer[sIdx]) {
-                const splat = document.createElement('div');
-                splat.className = 'splat';
-                splat.style.setProperty('--c', COLORS[cid]);
-                cup.appendChild(splat);
-            }
-
-            // 3. 渲染糖果本体
-            // 逻辑：如果这一行是 bad，且这个糖果是错的，它应该消失（pop掉）或者被爆炸掩盖
-            // 但为了视觉连贯，我们让它播放一个消失动画
+            // 2. 渲染糖果
             if (cid !== null) {
-                // 如果是坏的行，且是错的糖果 -> 播放消失动画
+                const c = document.createElement('div');
+                c.style.setProperty('--bg', COLORS[cid]);
+                
+                // 如果是错的，且行已结束，淡出消失
                 if (row.status === 'bad' && cid !== state.answer[sIdx]) {
-                    const c = document.createElement('div');
-                    c.className = 'candy pop-anim'; // 增加消失动画
-                    c.style.setProperty('--bg', COLORS[cid]);
-                    cup.appendChild(c);
-                } 
-                // 否则（正常猜测中，或者猜对了），正常显示糖果
-                else {
-                    const c = document.createElement('div');
+                    c.className = 'candy fade-out';
+                } else {
                     c.className = 'candy';
-                    c.style.setProperty('--bg', COLORS[cid]);
-                    cup.appendChild(c);
                 }
+                cup.appendChild(c);
             }
             slots.appendChild(cup);
         }
@@ -501,7 +457,6 @@
     }
   }, {passive: false});
   
-  // 鼠标兼容
   document.addEventListener('mousemove', (e) => {
       if (dragId === 99) { 
          ghost.style.left = e.clientX + 'px'; ghost.style.top = e.clientY + 'px';
