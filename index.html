@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>果汁软糖 - 水晶水滴版</title>
+  <title>果汁软糖 - 终极质感版</title>
 
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#1e3a8a">
+  <meta name="theme-color" content="#0f172a">
   <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
   <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,9 +14,10 @@
 
   <style>
     :root{
-      --text: #fff;
-      --cup-sz: 54px; 
-      --candy-sz: 42px; /* 稍微调小一点以适应水滴形状 */
+      --text: #e2e8f0;
+      /* 调整尺寸以匹配新设计 */
+      --cup-sz: 56px; 
+      --candy-sz: 46px; 
     }
 
     body{
@@ -24,44 +25,49 @@
       font-family: system-ui,-apple-system,sans-serif;
       color:var(--text); overflow:hidden; overscroll-behavior: none;
       
-      /* 深海蓝渐变背景 */
-      background: radial-gradient(circle at 50% 30%, #3b82f6 0%, #1e3a8a 40%, #020617 100%);
+      /* ===== 背景 (图三)：深邃午夜蓝 + 虚焦光斑 ===== */
+      background: radial-gradient(circle at 50% 120%, #1e293b 0%, #0f172a 40%, #020617 100%);
     }
 
-    /* 气泡背景 */
+    /* 背景虚焦光斑 (模拟图三的氛围) */
     .bg-bubbles{ position:fixed; inset:0; pointer-events:none; z-index:0; }
     .bubble{
       position:absolute; border-radius:50%;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.02);
-      animation: rise linear infinite;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.03), transparent 70%);
       bottom:-50px; left: var(--x); width: var(--size); height: var(--size);
-      animation-duration: var(--dur);
+      /* 极慢的漂浮 */
+      animation: float 20s infinite ease-in-out; 
+      animation-delay: var(--delay);
     }
-    @keyframes rise{ to{ transform: translateY(-110vh); } }
+    @keyframes float { 
+        0%, 100% { transform: translate(0, 0); opacity: 0.3; }
+        50% { transform: translate(20px, -40px); opacity: 0.6; }
+    }
 
     .app-container {
       width: 100%; max-width: 440px; height: 100%;
       position: relative; display: flex; flex-direction: column; z-index: 1;
-      background: rgba(0,0,0,0.15); /* 稍微加深遮罩 */
+      /* 整体加一层淡淡的暗色，突出主体 */
+      background: rgba(0,0,0,0.2);
     }
 
     header{
-      padding: 12px 16px; display:flex; justify-content:space-between; align-items:center;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+      padding: 12px 20px; display:flex; justify-content:space-between; align-items:center;
+      background: linear-gradient(to bottom, rgba(15, 23, 42, 0.8), transparent);
     }
-    h1{ margin:0; font-size:18px; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
-    .status-bar{ font-size:13px; color: #cbd5e1; display:flex; gap:12px; }
+    h1{ margin:0; font-size:16px; font-weight: 600; letter-spacing: 1px; color: #fff; }
+    
+    .status-bar{ font-size:13px; color: #94a3b8; display:flex; gap:12px; }
     .status-bar span { color:#fff; font-weight: bold; }
 
-    .controls { display: flex; gap: 8px; padding: 0 16px; justify-content: flex-end; }
+    .controls { display: flex; gap: 10px; padding: 0 16px; justify-content: flex-end; }
     .btn{
-      background:rgba(255, 255, 255, 0.1); color:#fff; 
-      border:1px solid rgba(255,255,255,0.25);
-      padding:6px 12px; border-radius:20px; font-size: 12px; cursor: pointer;
+      background:rgba(255, 255, 255, 0.08); color:#cbd5e1; 
+      border:1px solid rgba(255,255,255,0.1);
+      padding:6px 14px; border-radius:20px; font-size: 12px; cursor: pointer;
       backdrop-filter: blur(4px);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
+    .btn:active { background: rgba(255,255,255,0.2); }
 
     .game-area { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 20px 10px; }
     .attempts-scroll {
@@ -69,147 +75,147 @@
         display: flex; flex-direction: column; gap: 14px;
         scroll-behavior: smooth;
     }
+    /* 隐藏滚动条 */
     .attempts-scroll::-webkit-scrollbar { display: none; }
 
     .row-card{
       display: flex; justify-content: center; padding: 6px;
-      border-radius: 14px; flex-shrink: 0;
+      border-radius: 99px; /* 改为跑道圆角，更柔和 */
+      flex-shrink: 0;
+      transition: all 0.3s;
     }
+    /* 当前行高亮：图一那种淡淡的框 */
     .row-card.active{
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.05);
-      box-shadow: 0 0 25px rgba(59, 130, 246, 0.15);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 0 30px rgba(0,0,0,0.2);
     }
 
-    .slots{ display:grid; gap: 8px; grid-template-columns: repeat(var(--count), var(--cup-sz)); justify-content: center;}
+    .slots{ display:grid; gap: 10px; grid-template-columns: repeat(var(--count), var(--cup-sz)); justify-content: center;}
 
-    /* ===== 核心升级：透明水晶杯 ===== */
+    /* ===== 杯子 (图二)：极简透明玻璃圈 ===== */
     .cup{
-      width: var(--cup-sz); height: calc(var(--cup-sz) * 0.95);
-      /* 上宽下窄 */
-      clip-path: polygon(0 0, 100% 0, 88% 100%, 12% 100%);
-      
-      /* 极度透明，只留高光和边框 */
-      background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.01) 100%);
-      
-      /* 边框强化 */
-      border-top: 1px solid rgba(255,255,255,0.4); 
-      border-left: 1px solid rgba(255,255,255,0.1);
-      border-right: 1px solid rgba(255,255,255,0.1);
-      
-      /* 底部加厚效果 */
-      box-shadow: inset 0 -4px 6px rgba(255,255,255,0.05);
-      
+      width: var(--cup-sz); height: var(--cup-sz); /* 正圆形 */
+      border-radius: 50%;
       position:relative; 
-    }
-    /* 杯口高光圈 */
-    .cup::before{
-      content:""; position:absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: rgba(255,255,255,0.3);
-      filter: blur(1px);
-    }
-    /* 杯身左侧反光 */
-    .cup::after{
-      content:""; position:absolute; left: 10%; top: 10%; width: 15%; height: 80%;
-      background: linear-gradient(180deg, rgba(255,255,255,0.2), transparent);
-      border-radius: 99px; pointer-events: none; filter: blur(2px);
-    }
-    .cup.dropHover{ background: rgba(255,255,255,0.15); box-shadow: 0 0 15px rgba(255,255,255,0.2); }
-
-    /* 残留 (Residue) - 沉在杯底 */
-    .residue-layer {
-      position: absolute; bottom: 8%; left: 15%; width: 70%; height: 35%;
-      background: var(--c); opacity: 0.7; filter: blur(6px);
-      border-radius: 50%; pointer-events: none;
-      mix-blend-mode: screen; /* 让残留看起来更像发光液体 */
-    }
-
-    /* ===== 核心升级：水滴型软糖 (Waterdrop Gummy) ===== */
-    .candy{
-      width: var(--candy-sz); height: calc(var(--candy-sz) * 1.15); /* 拉长一点 */
       
-      /* 水滴形状：上尖下圆 */
-      border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
+      /* 1. 极细的半透明边框 */
+      border: 1px solid rgba(255,255,255,0.15);
       
-      position:absolute; left:50%; top:42%; /* 稍微向上调整 */
-      transform: translate(-50%, -50%); z-index: 10;
+      /* 2. 内部深邃感 (模拟空杯的暗度) */
+      background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.2) 100%);
       
-      /* 1. 主色基底 + 内部透光 */
-      background: radial-gradient(circle at 50% 40%, rgba(255,255,255,0.4) 0%, var(--bg) 60%, rgba(0,0,0,0.4) 100%);
-      
-      /* 2. 外部投影 + 内部反光 */
+      /* 3. 内部阴影，增加深度 */
       box-shadow: 
-        0 4px 8px rgba(0,0,0,0.4), /* 投影 */
-        inset 0 -4px 6px rgba(0,0,0,0.3), /* 底部厚度 */
-        inset 0 4px 6px rgba(255,255,255,0.4); /* 顶部透光 */
-        
+        inset 0 2px 4px rgba(255,255,255,0.05),
+        inset 0 -2px 6px rgba(0,0,0,0.3);
+    }
+    
+    /* 玻璃反光 (左上角的高光) */
+    .cup::after {
+        content: ""; position: absolute; top: 10%; left: 10%;
+        width: 30%; height: 30%; border-radius: 50%;
+        background: radial-gradient(circle at center, rgba(255,255,255,0.15), transparent 70%);
+        filter: blur(2px);
+    }
+
+    /* 拖拽悬停高亮 */
+    .cup.dropHover{ 
+        border-color: rgba(255,255,255,0.5); 
+        background: rgba(255,255,255,0.1);
+        box-shadow: 0 0 15px rgba(255,255,255,0.1);
+    }
+
+    /* 残留 (Residue) - 改为填充整个圆 */
+    .residue-layer {
+      position: absolute; inset: 2px; border-radius: 50%;
+      background: var(--c); opacity: 0.6; 
+      /* 边缘模糊，中心实心 */
+      mask-image: radial-gradient(circle, black 40%, transparent 80%);
+      -webkit-mask-image: radial-gradient(circle, black 40%, transparent 80%);
+      pointer-events: none;
+    }
+
+    /* ===== 糖果 (图四)：扁圆高光宝石 ===== */
+    .candy{
+      width: var(--candy-sz); height: calc(var(--candy-sz) * 0.9); /* 稍微扁一点 */
+      border-radius: 50%;
+      position:absolute; left:50%; top:50%; transform: translate(-50%, -50%); 
+      z-index: 10;
+      
+      /* 1. 基础色 + 内部微光 */
+      background: radial-gradient(circle at 40% 30%, rgba(255,255,255,0.2), var(--bg));
+      
+      /* 2. 立体光影 */
+      box-shadow: 
+        inset 0 3px 5px rgba(255,255,255,0.5), /* 顶部亮边 */
+        inset 0 -4px 6px rgba(0,0,0,0.4), /* 底部厚度阴影 */
+        0 4px 8px rgba(0,0,0,0.3); /* 外部投影 */
+      
       transition: opacity 0.2s, transform 0.2s;
     }
     
-    /* 顶部湿润高光 */
+    /* 强高光 (湿润感) */
     .candy::after{
-      content:""; position:absolute; left: 25%; top: 15%; width: 50%; height: 30%;
+      content:""; position:absolute; left: 20%; top: 15%; width: 35%; height: 25%;
       border-radius: 50%;
-      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0));
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.1));
       filter: blur(1px);
     }
-    
-    /* 底部反光点 */
-    .candy::before{
-      content:""; position:absolute; bottom: 15%; right: 25%; width: 20%; height: 10%;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.6);
-      filter: blur(2px);
-    }
 
-    .candy.fade-out { opacity: 0; transform: translate(-50%, -30%) scale(0.5); }
+    .candy.fade-out { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
 
-    /* 底部调色盘 */
+    /* ===== 底部调色盘与凹槽 (图五) ===== */
     .palette-area {
-      /* 玻璃质感底座 */
-      background: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(255,255,255,0.15);
-      padding: 10px 0 30px 0;
-      position: relative;
+        /* 深色磨砂玻璃底座 */
+        background: rgba(15, 23, 42, 0.85);
+        border-top: 1px solid rgba(255,255,255,0.08);
+        padding: 15px 0 30px 0;
+        position: relative;
     }
     
     .palette-scroll { 
-        display:flex; gap:12px; padding:0 20px; overflow-x:auto; height: 80px; align-items:center; 
+        display:flex; gap:12px; padding:0 20px; overflow-x:auto; height: 70px; align-items:center; 
         justify-content: center; 
     }
     
     .p-item { 
-        width: 50px; height: 60px; flex-shrink: 0; 
+        width: 56px; height: 56px; flex-shrink: 0; 
         display:flex; justify-content:center; align-items:center; 
         position: relative;
     }
     
-    /* 凹槽：深色坑 */
+    /* 凹槽：带有内阴影的深色圆环 */
     .p-item::before {
-        content:""; position: absolute; bottom: 5px;
-        width: 44px; height: 44px;
-        border-radius: 50%;
-        background: rgba(0,0,0,0.5); 
-        box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
-        border: 1px solid rgba(255,255,255,0.05);
+        content:""; position: absolute; 
+        width: 48px; height: 48px; border-radius: 50%;
+        
+        /* 深色背景 */
+        background: rgba(0,0,0,0.3);
+        
+        /* 环形边框 */
+        border: 2px solid rgba(255,255,255,0.05);
+        
+        /* 强烈的内阴影，制造凹陷感 */
+        box-shadow: inset 0 3px 6px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.05);
     }
 
     .palette-candy { 
-        position: relative; top: -5px; /* 稍微浮起一点 */
-        /* 在调色盘里稍微缩小一点 */
-        transform: scale(0.9) translate(0, 0); 
-        left: 0;
+        position: relative; 
+        transform: scale(0.95); /* 在盘子里稍微小一点 */
     }
     
+    /* 拖拽时：隐藏源糖果 -> 露出下面的凹槽 */
     .palette-candy.dragging-source { opacity: 0; }
-    .candy.used { filter: grayscale(0.9) opacity(0.4); }
+    
+    .candy.used { filter: grayscale(1) opacity(0.2); }
 
+    /* 拖拽幻影：放大并增加阴影 */
     .drag-ghost {
       position: fixed; pointer-events: none; z-index: 9999;
-      width: 50px; height: 60px; opacity: 0.95;
+      width: 50px; height: 46px; opacity: 1;
       transform: translate(-50%, -50%) scale(1.1);
-      filter: drop-shadow(0 15px 15px rgba(0,0,0,0.5));
+      filter: drop-shadow(0 15px 10px rgba(0,0,0,0.4));
     }
   </style>
 </head>
@@ -219,14 +225,14 @@
 
   <div class="app-container">
     <header>
-        <h1>🍬 果汁软糖</h1>
+        <h1>果汁软糖配对</h1>
         <div class="status-bar">
             <span>第 <span id="level">1</span> 关</span>
         </div>
         <div class="controls">
             <button class="btn" id="soundBtn">🔇</button>
-            <button class="btn" id="resetBtn">↺</button>
-            <button class="btn" id="wipeBtn" style="color:#fca5a5; border-color:rgba(239,68,68,0.4)">⚠</button>
+            <button class="btn" id="resetBtn">重置</button>
+            <button class="btn" id="wipeBtn" style="color:#fca5a5; border-color:rgba(239,68,68,0.4)">清档</button>
         </div>
     </header>
 
@@ -245,28 +251,26 @@
 
 <script>
 (() => {
-  // ===== 核心升级：高饱和度果汁色池 =====
+  // 更加鲜亮、通透的果冻色
   const COLORS = [
-    "#ff2a2a", // 鲜红
-    "#ff8800", // 亮橙
-    "#ffcc00", // 金黄
-    "#00d615", // 鲜绿
-    "#00e5ff", // 亮青
-    "#2952ff", // 宝蓝
-    "#d500f9", // 霓虹紫
-    "#ff0080", // 亮粉
-    "#8d6e63", // 巧克力棕 (稍微保留一个暗色)
-    "#607d8b", // 蓝灰
-    "#aeea00", // 酸橙绿
-    "#6200ea", // 深靛青
-    "#f50057", // 玫瑰红
-    "#00c853"  // 翠绿
+    "#ff4757", // 莓果红
+    "#ffa502", // 鲜橙
+    "#eccc68", // 柠檬黄
+    "#2ed573", // 薄荷绿
+    "#1e90ff", // 海洋蓝
+    "#3742fa", // 蓝莓
+    "#a55eea", // 紫罗兰
+    "#ff6b81", // 蜜桃粉
+    "#57606f", // 黑加仑
+    "#7bed9f", // 青柠
+    "#70a1ff", // 天空蓝
+    "#5352ed"  // 靛青
   ];
-  const KEY_SAVE = 'gummy_v8_save';
+  const KEY_SAVE = 'gummy_v9_save';
   
   let state = { level: 1, pairCount: 3, colors: [], answer: [], rows: [], activeRow: 0, sound: true };
   
-  /* --- 音频系统 --- */
+  /* --- 音频系统 (修复无声) --- */
   const audios = { 
     bg: document.getElementById('bg-soda'), 
     pop: document.getElementById('sfx-pop'), 
@@ -274,13 +278,21 @@
   };
   let audioUnlocked = false;
 
+  // 强力解锁：任何点击都尝试播放并立即暂停，只为激活音频引擎
   function unlockAudio() {
     if (audioUnlocked) return;
     Object.values(audios).forEach(a => {
-        a.volume = 0; a.play().catch(()=>{});
-        setTimeout(() => { a.pause(); a.currentTime=0; if(a.id==='bg-soda') a.volume=0.3; else a.volume=1; }, 50);
+        a.volume = 0; 
+        a.play().then(() => {
+            setTimeout(() => { 
+                a.pause(); a.currentTime=0; 
+                // 恢复音量
+                if(a.id==='bg-soda') a.volume=0.3; else a.volume=1; 
+            }, 50);
+        }).catch(()=>{});
     });
     audioUnlocked = true;
+    // 如果开关是开的，播放背景音乐
     if(state.sound) setTimeout(() => audios.bg.play().catch(()=>{}), 200);
   }
   document.addEventListener('touchstart', unlockAudio, {once:true});
@@ -289,7 +301,10 @@
   function playSound(key) {
     if (!state.sound) return;
     const a = audios[key];
-    if (a) { a.currentTime=0; a.volume=1; a.play().catch(()=>{}); }
+    if (a) { 
+        a.currentTime=0; a.volume=1; 
+        a.play().catch(e => console.log('play fail', e)); 
+    }
   }
 
   /* --- 游戏逻辑 --- */
@@ -343,10 +358,10 @@
   /* --- 渲染 --- */
   function adjustSize() {
     const w = Math.min(window.innerWidth, 440) - 20; 
-    let sz = (w - (state.pairCount - 1) * 6) / state.pairCount;
-    sz = Math.max(34, Math.min(64, sz));
+    let sz = (w - (state.pairCount - 1) * 8) / state.pairCount;
+    sz = Math.max(34, Math.min(68, sz));
     document.documentElement.style.setProperty('--cup-sz', sz + 'px');
-    document.documentElement.style.setProperty('--candy-sz', (sz * 0.75) + 'px');
+    document.documentElement.style.setProperty('--candy-sz', (sz * 0.8) + 'px');
     document.documentElement.style.setProperty('--count', state.pairCount);
   }
 
@@ -401,7 +416,7 @@
     });
   }
 
-  /* --- 交互 (Drag Fix) --- */
+  /* --- 交互 (Drag) --- */
   let ghost = null, dragId = null, activeColor = null, hoverCup = null, sourceEl = null;
 
   function cleanupGhost() {
@@ -417,13 +432,12 @@
     const t = e.changedTouches[0]; 
     dragId = t.identifier; activeColor = cid; sourceEl = el;
     
-    sourceEl.classList.add('dragging-source');
+    sourceEl.classList.add('dragging-source'); // 隐藏原糖果，露出凹槽
 
     ghost = el.cloneNode(true);
     ghost.className = 'candy drag-ghost';
     ghost.classList.remove('dragging-source', 'palette-candy');
     ghost.style.setProperty('--bg', COLORS[cid]);
-    // 修正 Ghost 位置，让它中心对准手指
     ghost.style.left = t.clientX + 'px'; ghost.style.top = t.clientY + 'px';
     document.body.appendChild(ghost);
   }
@@ -457,13 +471,14 @@
   document.addEventListener('touchcancel', cleanupGhost);
   document.addEventListener('visibilitychange', () => { if(document.hidden) cleanupGhost(); });
 
-  /* --- 工具 --- */
+  /* --- 背景浮动球 (视觉) --- */
   const bg = document.getElementById("bgBubbles");
-  for(let i=0;i<15;i++){ 
+  for(let i=0;i<6;i++){ // 少量几个大的虚焦光斑
     const b = document.createElement("div"); b.className = "bubble";
-    const size = 10 + Math.random()*25;
-    b.style.setProperty("--size", size+"px"); b.style.setProperty("--x", Math.random()*100 + "vw");
-    b.style.setProperty("--dur", (10+Math.random()*15)+"s");
+    const size = 100 + Math.random()*200;
+    b.style.setProperty("--size", size+"px"); 
+    b.style.setProperty("--x", Math.random()*100 + "vw");
+    b.style.setProperty("--delay", (-Math.random()*20)+"s");
     bg.appendChild(b);
   }
 
