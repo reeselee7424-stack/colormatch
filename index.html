@@ -357,7 +357,7 @@
 
 <script>
     /**********************
-     * Utilities
+     * 工具函数
      **********************/
     const $ = (sel, el=document) => el.querySelector(sel);
     const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
@@ -371,17 +371,17 @@
     };
 
     /**********************
-     * Audio System (Fixed)
+     * 音频系统 (修复版)
+     * 解决音画不同步和爆音问题
      **********************/
-    // 使用真实素材，并预加载以解决延迟
-    const audioAssets = {
+    const audioCtx = {
       pop: new Audio('./pop.mp3'),
       win: new Audio('./correct.mp3'),
-      ui:  new Audio('./soda.mp3') 
+      ui:  new Audio('./soda.mp3')
     };
-    
-    // 预加载
-    Object.values(audioAssets).forEach(a => {
+
+    // 预加载音频
+    Object.values(audioCtx).forEach(a => {
       a.preload = 'auto';
       a.load();
     });
@@ -389,26 +389,19 @@
     function playSound(type="pop", volume=0.5){
       if(!persist.sound) return;
       
-      let sound;
-      if(type === "win") sound = audioAssets.win;
-      else if(type === "ok" || type === "ui") sound = audioAssets.ui;
-      else sound = audioAssets.pop;
+      let baseAudio;
+      if(type === "win") baseAudio = audioCtx.win;
+      else if(type === "ui") baseAudio = audioCtx.ui;
+      else baseAudio = audioCtx.pop; // 默认移动声音
 
-      // 允许重叠播放 (克隆节点或重置时间)
-      if(sound.paused){
-        sound.currentTime = 0;
-        sound.volume = volume;
-        sound.play().catch(()=>{});
-      }else{
-        // 如果正在播放，克隆一个新实例播放，实现无缝连击
-        const clone = sound.cloneNode();
-        clone.volume = volume;
-        clone.play().catch(()=>{});
-      }
+      // 克隆节点以支持并发播放（快速连击时不会切断上一个声音）
+      const sound = baseAudio.cloneNode();
+      sound.volume = volume;
+      sound.play().catch(e => console.warn("Audio play failed:", e));
     }
 
     /**********************
-     * Color palette
+     * 颜色生成算法
      **********************/
     const BASE_COLORS = [
       "#ff4d4d", "#ff9f1a", "#ffd93d",
@@ -472,17 +465,21 @@
     function generateDistinctColors(totalNeeded){
       const colors = [...BASE_COLORS];
       if(totalNeeded <= colors.length) return colors.slice(0, totalNeeded);
+
       const hues = colors.map(c => rgbToHsl(...Object.values(hexToRgb(c))).h);
       const MIN_HUE_DIST = 22;
       const S_RANGE = [0.72, 0.92];
       const L_RANGE = [0.48, 0.62];
+
       let guard = 0;
       while(colors.length < totalNeeded && guard++ < 2000){
         const h = randInt(0,359);
         if(hues.some(x => circularHueDist(x,h) < MIN_HUE_DIST)) continue;
+
         const s = (Math.random()*(S_RANGE[1]-S_RANGE[0])+S_RANGE[0]);
         const l = (Math.random()*(L_RANGE[1]-L_RANGE[0])+L_RANGE[0]);
         const hex = hslToHex(h,s,l);
+
         const {r,g,b} = hexToRgb(hex);
         const tooClose = colors.some(c=>{
           const t = hexToRgb(c);
@@ -490,6 +487,7 @@
           return (dr*dr+dg*dg+db*db) < 2400;
         });
         if(tooClose) continue;
+
         colors.push(hex);
         hues.push(h);
       }
@@ -497,7 +495,7 @@
     }
 
     /**********************
-     * Game State + Persistence
+     * 游戏状态 + 持久化
      **********************/
     const STORAGE_KEY = "juiceMatch_v2";
     function loadPersist(){
@@ -528,7 +526,7 @@
     const persist = loadPersist() || {
       level: 1,
       sound: true,
-      best: {} 
+      best: {}
     };
 
     let level = clamp(persist.level || 1, 1, 999);
@@ -540,18 +538,6 @@
     let current = [];      
     let attempts = [];     
     let draggingIdx = null; 
-
-    // rendering cache
-    let needRender = false;
-    function scheduleRender(){
-      if(needRender) return;
-      needRender = true;
-      requestAnimationFrame(()=>{
-        needRender = false;
-        renderTop();
-        updateCupsVisuals(); // 仅更新视觉，不重建 DOM
-      });
-    }
 
     function setSoundUI(){
       soundBtn.textContent = soundOn ? "声音已开启" : "声音已关闭";
@@ -565,8 +551,9 @@
     function startLevel(lvl, keepAttempts=false){
       level = lvl;
       slotCount = computeSlotCount(level);
-      palette = generateDistinctColors(14);
-      
+
+      palette = generateDistinctColors(14); // 确保颜色库充足
+
       const ids = shuffle([...Array(palette.length).keys()]);
       secret = ids.slice(0, slotCount);
       current = shuffle(secret.slice());
@@ -578,12 +565,11 @@
       const best = persist.best?.[String(level)];
       hintEl.textContent =
         isMobileLike
-          ? `移动端低特效：错位会“变糊”。第22关起每关随机 9~14 杯。${best ? "本关最佳："+best+" 次" : ""}`
+          ? `移动端优化模式：拖拽更流畅。第22关起每关随机 9~14 杯。${best ? "本关最佳："+best+" 次" : ""}`
           : `拖动软糖到杯子中排列，提交会自动记录结果。第22关起每关随机 9~14 杯。${best ? "本关最佳："+best+" 次" : ""}`;
 
-      // 重置 DOM 结构（仅在关卡开始时做一次）
-      setupCupsDOM(); 
-      scheduleRender();
+      renderTop();
+      renderCups(true); // 强制重绘
       renderAttemptsFull();
       persist.level = level;
       persist.sound = soundOn;
@@ -591,13 +577,14 @@
     }
 
     /**********************
-     * Marking logic
+     * 核心逻辑：判定与渲染
      **********************/
     function gradeGuess(guess){
       const n = secret.length;
       const marks = Array(n).fill(0);
       const secretLeft = secret.slice();
       const guessLeft = guess.slice();
+
       for(let i=0;i<n;i++){
         if(guessLeft[i] === secretLeft[i]){
           marks[i] = 2;
@@ -616,11 +603,10 @@
       return marks;
     }
 
-    function isWin(marks){ return marks.every(m => m===2); }
+    function isWin(marks){
+      return marks.every(m => m===2);
+    }
 
-    /**********************
-     * Rendering (Optimized)
-     **********************/
     function renderTop(){
       lvlEl.textContent = String(level);
       countEl.textContent = String(slotCount);
@@ -628,164 +614,175 @@
       setSoundUI();
     }
 
-    // 新增：只构建一次 DOM 结构
-    function setupCupsDOM() {
-      cupsRowEl.replaceChildren(); // 清空旧的
-      
-      for(let i=0; i<slotCount; i++){
-        const cup = document.createElement("div");
-        cup.className = "cup";
-        cup.dataset.pos = String(i);
+    /**
+     * 渲染杯子区域 (优化版)
+     * forceRebuild: true 则完全重置 DOM (关卡开始时)
+     * forceRebuild: false 则仅更新颜色 (交换位置时)
+     */
+    function renderCups(forceRebuild = false){
+      // 检查是否需要强制重建（如果DOM数量不对，也强制重建）
+      const existingCups = cupsRowEl.querySelectorAll(".cup");
+      const shouldRebuild = forceRebuild || existingCups.length !== slotCount;
 
-        const candy = document.createElement("div");
-        candy.className = "cupCandy";
-        // 关键优化：给 candy 加上 id 或引用，方便后续只更新 style
-        candy.draggable = !isMobileLike; 
-        candy.dataset.pos = String(i);
-        
-        // Desktop Drag Events
-        candy.addEventListener("dragstart", (e)=>{
-          draggingIdx = i;
-          candy.classList.add("dragging");
-          e.dataTransfer.setData("text/plain", String(i));
-          e.dataTransfer.effectAllowed = "move";
-        });
-        candy.addEventListener("dragend", ()=>{
-          draggingIdx = null;
-          candy.classList.remove("dragging");
-          clearDropTargets();
-        });
+      if(shouldRebuild){
+        cupsRowEl.replaceChildren(); // 清空
 
-        cup.addEventListener("dragover", (e)=>{
-          e.preventDefault();
-          cup.classList.add("dropTarget");
-        });
-        cup.addEventListener("dragleave", ()=>{
-          cup.classList.remove("dropTarget");
-        });
-        cup.addEventListener("drop", (e)=>{
-          e.preventDefault();
-          cup.classList.remove("dropTarget");
-          const from = parseInt(e.dataTransfer.getData("text/plain") || "-1", 10);
-          const to = i;
-          handleSwap(from, to);
-        });
+        for(let i=0; i<slotCount; i++){
+          const cup = document.createElement("div");
+          cup.className = "cup";
+          cup.dataset.pos = String(i);
 
-        // Mobile Touch Events (Optimized)
-        if(isMobileLike){
-          let touchId = null;
-          let ghost = null;
+          const candy = document.createElement("div");
+          candy.className = "cupCandy";
+          candy.draggable = !isMobileLike; 
+          candy.dataset.pos = String(i);
           
-          candy.addEventListener("touchstart", (e)=>{
-            const t = e.changedTouches[0];
-            touchId = t.identifier;
+          // 立即应用颜色，防止"消失"
+          applyCandyStyle(candy, current[i]);
+
+          // --- Desktop Drag ---
+          candy.addEventListener("dragstart", (e)=>{
             draggingIdx = i;
-            
-            // 创建 Ghost
-            ghost = candy.cloneNode(true);
-            ghost.classList.add("ghost");
-            // 使用 fixed 0,0 + transform 避免布局抖动
-            ghost.style.position = "fixed";
-            ghost.style.left = "0";
-            ghost.style.top = "0";
-            ghost.style.zIndex = "9999";
-            ghost.style.pointerEvents = "none";
-            ghost.style.opacity = "0.9";
-            
-            // 初始位置
-            const rect = candy.getBoundingClientRect();
-            // 计算偏移让手指在中心
-            const initialX = rect.left;
-            const initialY = rect.top;
-            
-            // 记录手指相对于元素的偏移
-            ghost.dataset.offsetX = t.clientX - initialX;
-            ghost.dataset.offsetY = t.clientY - initialY;
-            
-            ghost.style.transform = `translate(${initialX}px, ${initialY}px) scale(1.05)`;
-            document.body.appendChild(ghost);
-          }, {passive:true});
-
-          candy.addEventListener("touchmove", (e)=>{
-            if(touchId==null || !ghost) return;
-            const t = [...e.changedTouches].find(x=>x.identifier===touchId);
-            if(!t) return;
-
-            // 优化：使用 transform 移动，不触发 Layout
-            const offX = parseFloat(ghost.dataset.offsetX);
-            const offY = parseFloat(ghost.dataset.offsetY);
-            const x = t.clientX - offX;
-            const y = t.clientY - offY;
-            
-            ghost.style.transform = `translate(${x}px, ${y}px) scale(1.05)`;
-
-            // 碰撞检测 (throttle check could be added here if still laggy)
-            // 简单优化：只检测 cup 元素
-            const el = document.elementFromPoint(t.clientX, t.clientY);
-            const targetCup = el?.closest?.(".cup");
+            candy.classList.add("dragging");
+            e.dataTransfer.setData("text/plain", String(i));
+            e.dataTransfer.effectAllowed = "move";
+          });
+          candy.addEventListener("dragend", ()=>{
+            draggingIdx = null;
+            candy.classList.remove("dragging");
             clearDropTargets();
-            if(targetCup) targetCup.classList.add("dropTarget");
-          }, {passive:true}); // passive true 提高滚动性能
+          });
 
-          candy.addEventListener("touchend", (e)=>{
-            if(touchId==null) return;
-            const t = [...e.changedTouches].find(x=>x.identifier===touchId);
-            touchId = null;
+          // --- Drop Logic ---
+          cup.addEventListener("dragover", (e)=>{
+            e.preventDefault();
+            cup.classList.add("dropTarget");
+          });
+          cup.addEventListener("dragleave", ()=>{
+            cup.classList.remove("dropTarget");
+          });
+          cup.addEventListener("drop", (e)=>{
+            e.preventDefault();
+            cup.classList.remove("dropTarget");
+            const from = parseInt(e.dataTransfer.getData("text/plain") || "-1", 10);
+            handleSwap(from, i);
+          });
+
+          // --- Mobile Touch (GPU Accelerated Ghost) ---
+          if(isMobileLike){
+            let touchId = null;
+            let ghost = null;
             
-            let targetCup = null;
-            if(t){
+            candy.addEventListener("touchstart", (e)=>{
+              const t = e.changedTouches[0];
+              touchId = t.identifier;
+              draggingIdx = i;
+
+              // 创建镜像 (Ghost)
+              ghost = candy.cloneNode(true);
+              ghost.style.position = "fixed";
+              ghost.style.left = "0"; 
+              ghost.style.top = "0";
+              ghost.style.zIndex = "9999";
+              ghost.style.pointerEvents = "none";
+              ghost.style.opacity = "0.9";
+              // 关键：计算初始偏移，防止跳变
+              const rect = candy.getBoundingClientRect();
+              ghost.dataset.startX = t.clientX - rect.left;
+              ghost.dataset.startY = t.clientY - rect.top;
+              // 初始位置
+              ghost.style.transform = `translate(${rect.left}px, ${rect.top}px) scale(1.05)`;
+              
+              document.body.appendChild(ghost);
+            }, {passive:true});
+
+            candy.addEventListener("touchmove", (e)=>{
+              if(touchId==null || !ghost) return;
+              const t = [...e.changedTouches].find(x=>x.identifier===touchId);
+              if(!t) return;
+
+              // 使用 translate 移动，不触发重排，极大提升性能
+              const x = t.clientX - parseFloat(ghost.dataset.startX);
+              const y = t.clientY - parseFloat(ghost.dataset.startY);
+              ghost.style.transform = `translate(${x}px, ${y}px) scale(1.05)`;
+
+              // 高亮目标
+              const el = document.elementFromPoint(t.clientX, t.clientY);
+              const targetCup = el?.closest?.(".cup");
+              clearDropTargets();
+              if(targetCup) targetCup.classList.add("dropTarget");
+            }, {passive:true});
+
+            candy.addEventListener("touchend", (e)=>{
+              if(touchId==null) return;
+              const t = [...e.changedTouches].find(x=>x.identifier===touchId);
+              touchId = null;
+
+              let targetCup = null;
+              if(t){
                 const el = document.elementFromPoint(t.clientX, t.clientY);
                 targetCup = el?.closest?.(".cup");
-            }
-            
-            clearDropTargets();
-            if(targetCup){
-              const to = parseInt(targetCup.dataset.pos, 10);
-              handleSwap(draggingIdx, to);
-            }
-            
-            draggingIdx = null;
-            if(ghost) ghost.remove();
-            ghost = null;
-          }, {passive:true});
+              }
+              
+              clearDropTargets();
+              if(targetCup){
+                const to = parseInt(targetCup.dataset.pos, 10);
+                handleSwap(draggingIdx, to);
+              }
+              
+              draggingIdx = null;
+              ghost && ghost.remove();
+              ghost = null;
+            }, {passive:true});
+          }
+
+          cup.appendChild(candy);
+          cupsRowEl.appendChild(cup);
         }
 
-        cup.appendChild(candy);
-        cupsRowEl.appendChild(cup);
+        // 添加按钮
+        const actions = document.createElement("div");
+        actions.style.marginTop = "10px";
+        actions.style.display = "flex";
+        actions.style.gap = "10px";
+        actions.style.flexWrap = "wrap";
+
+        const submit = document.createElement("button");
+        submit.className = "btn";
+        submit.textContent = "提交本次排列";
+        submit.addEventListener("click", submitGuess);
+
+        const shuffleBtn = document.createElement("button");
+        shuffleBtn.className = "btn";
+        shuffleBtn.textContent = "随机打乱";
+        shuffleBtn.addEventListener("click", ()=>{
+          playSound("ui");
+          shuffle(current);
+          renderCups(false); // 仅更新颜色
+        });
+
+        actions.appendChild(submit);
+        actions.appendChild(shuffleBtn);
+        cupsRowEl.appendChild(actions);
+
+      } else {
+        // --- 快速更新模式 (Dom 复用) ---
+        const cups = cupsRowEl.querySelectorAll(".cup");
+        for(let i=0; i<slotCount; i++){
+            const candy = cups[i].querySelector(".cupCandy");
+            if(candy) applyCandyStyle(candy, current[i]);
+        }
       }
-      
-      // Buttons
-      const actions = document.createElement("div");
-      actions.style.marginTop = "10px";
-      actions.style.display = "flex";
-      actions.style.gap = "10px";
-      actions.style.flexWrap = "wrap";
-
-      const submit = document.createElement("button");
-      submit.className = "btn";
-      submit.textContent = "提交本次排列";
-      submit.addEventListener("click", submitGuess);
-
-      const shuffleBtn = document.createElement("button");
-      shuffleBtn.className = "btn";
-      shuffleBtn.textContent = "随机打乱";
-      shuffleBtn.addEventListener("click", ()=>{
-        playSound("ui");
-        shuffle(current);
-        scheduleRender();
-      });
-
-      actions.appendChild(submit);
-      actions.appendChild(shuffleBtn);
-      cupsRowEl.appendChild(actions);
     }
 
-    // 辅助：处理交换逻辑
-    function handleSwap(from, to){
-        if(Number.isFinite(from) && from>=0 && from<slotCount && to>=0 && to<slotCount && from!==to){
-            [current[from], current[to]] = [current[to], current[from]];
-            playSound("pop"); // 播放音效
-            scheduleRender();
+    // 辅助：安全应用样式
+    function applyCandyStyle(el, colorIdx){
+        if(palette[colorIdx]){
+            el.style.background = `linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.06)), ${palette[colorIdx]}`;
+            el.dataset.color = String(colorIdx);
+            // 确保没有被隐藏
+            el.style.display = "flex"; 
+            el.style.opacity = "1";
         }
     }
 
@@ -793,19 +790,11 @@
         [...cupsRowEl.querySelectorAll(".cup")].forEach(x=>x.classList.remove("dropTarget"));
     }
 
-    // 新增：高效更新 DOM，不销毁元素
-    function updateCupsVisuals(){
-        const cups = cupsRowEl.querySelectorAll(".cup");
-        // cups 的数量应该等于 slotCount (忽略最后的 actions div)
-        for(let i=0; i<slotCount; i++){
-            const cup = cups[i];
-            const candy = cup.querySelector(".cupCandy");
-            if(candy){
-                const colorIdx = current[i];
-                // 仅更新视觉属性
-                candy.style.background = `linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.06)), ${palette[colorIdx]}`;
-                candy.dataset.color = String(colorIdx);
-            }
+    function handleSwap(from, to){
+        if(Number.isFinite(from) && from>=0 && from<slotCount && to>=0 && to<slotCount && from!==to){
+            [current[from], current[to]] = [current[to], current[from]];
+            playSound("pop", 0.6);
+            renderCups(false); // 仅更新颜色，不重绘 DOM
         }
     }
 
@@ -818,7 +807,7 @@
     function appendAttemptRow(attempt){
       const row = document.createElement("div");
       row.className = "row";
-      // ... (structure same as before)
+      
       const meta = document.createElement("div");
       meta.className = "rowMeta";
       meta.innerHTML = `<span class="pill">第 ${attemptsEl.children.length+1} 次</span>`;
@@ -852,15 +841,14 @@
     }
 
     /**********************
-     * Submit + Effects
+     * 提交与结算
      **********************/
     function popBlurOnMobile(){
       if(!isMobileLike) return;
-      const candies = [...document.querySelectorAll(".cupCandy")];
+      const candies = cupsRowEl.querySelectorAll(".cupCandy");
       candies.forEach(el=>{
-        // 重置动画
         el.classList.remove("blurPop");
-        void el.offsetWidth; // 强制重绘
+        void el.offsetWidth; // 触发重绘
         el.classList.add("blurPop");
       });
     }
@@ -874,7 +862,7 @@
       appendAttemptRow({guess, marks});
 
       if(soundOn){
-        if(isWin(marks)) playSound("win", 0.6);
+        if(isWin(marks)) playSound("win", 0.8);
         else playSound("pop", 0.4);
       }
       if(!isWin(marks)) popBlurOnMobile();
@@ -896,7 +884,7 @@
     }
 
     /**********************
-     * Controls
+     * 全局控制
      **********************/
     soundBtn.addEventListener("click", ()=>{
       soundOn = !soundOn;
@@ -919,12 +907,11 @@
       startLevel(1);
     });
 
-    /**********************
-     * Init
-     **********************/
+    // 初始化
     setSoundUI();
     startLevel(level);
 </script>
 </body>
 </html>
+
 
