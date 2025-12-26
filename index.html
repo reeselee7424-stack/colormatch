@@ -528,6 +528,26 @@
         draggingColorId = colorId;
         e.dataTransfer.setData("text/plain", String(colorId));
         e.dataTransfer.effectAllowed = "move";
+        
+        // ✅ 自定义拖拽时跟随的“小糖果影子”，避免截图一大块
+        const ghost = document.createElement("div");
+        ghost.className = "candy paletteCandy";          // 复用你的糖果样式
+        ghost.style.width = getComputedStyle(d).width;
+        ghost.style.height = getComputedStyle(d).height;
+        ghost.style.background = d.style.background;     // 保持同色同质感
+        ghost.style.position = "fixed";
+        ghost.style.left = "-1000px";
+        ghost.style.top = "-1000px";
+        ghost.style.pointerEvents = "none";
+        document.body.appendChild(ghost);
+        
+        // 让“手指/鼠标”落点在糖果中心
+        const w = ghost.getBoundingClientRect().width;
+        const h = ghost.getBoundingClientRect().height;
+        e.dataTransfer.setDragImage(ghost, w / 2, h / 2);
+        
+        // 下一帧移除，避免 DOM 堆积
+        requestAnimationFrame(() => ghost.remove());
       });
 
       d.addEventListener("dragend", () => {
@@ -737,3 +757,4 @@
 </script>
 </body>
 </html>
+
