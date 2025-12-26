@@ -813,27 +813,32 @@
       // 爆开视觉（不在这里播 pop，pop 已在判错时播过）
       if (row.status === "bad" && row.marks && row.stains && row.burstDone === false){
         const cupEls = slots.querySelectorAll(".cup");
+     // 错误反馈：仅糊化（无喷溅 / 无粒子 / 无 pop 动画）
+      if (row.status === "bad" && row.marks && row.burstDone === false) {
+        const cupEls = slots.querySelectorAll(".cup");
+        const wrongIdxs = [];
 
         row.marks.forEach((ok, i) => {
-          if (!ok){
-            const hex = row.stains[i];
-            addSplat(cupEls[i], hex);
-            spawnParticles(cupEls[i], hex);
+      if (!ok) {
+           wrongIdxs.push(i);
+        const candyEl = cupEls[i].querySelector(".cupCandy");
+      if (candyEl) {
+        candyEl.classList.add("blurWrong");
+      }
+    }
+  });
 
-            const candyEl = cupEls[i].querySelector(".cupCandy");
-            if (candyEl){
-              candyEl.classList.add("pop");
-              setTimeout(() => {
-                row.wrongGone[i] = true;
-                renderAll();
-              }, 280);
-            } else {
-              row.wrongGone[i] = true;
-            }
-          }
-        });
+  // 统一延迟一次性处理（避免多次 render）
+  setTimeout(() => {
+    wrongIdxs.forEach(i => {
+      row.wrongGone[i] = true;
+    });
+    row.burstDone = true;
+    renderAll();
+  }, 150);
+}
 
-        row.burstDone = true;
+
       }
     });
 
@@ -909,3 +914,4 @@
 </script>
 </body>
 </html>
+
