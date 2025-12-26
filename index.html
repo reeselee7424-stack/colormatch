@@ -810,40 +810,31 @@
       card.appendChild(slots);
       elAttempts.appendChild(card);
 
-      // 爆开视觉（不在这里播 pop，pop 已在判错时播过）
-      if (row.status === "bad" && row.marks && row.stains && row.burstDone === false){
+      if (row.status === "bad" && row.marks && row.burstDone === false) {
         const cupEls = slots.querySelectorAll(".cup");
-        // 错误反馈：仅糊化（无喷溅 / 无粒子 / 无 pop 动画）
-        if (row.status === "bad" && row.marks && row.burstDone === false) {
-          const cupEls = slots.querySelectorAll(".cup");
-          const wrongIdxs = [];
-          row.marks.forEach((ok, i) => {
-            if (!ok) {
-              wrongIdxs.push(i);
-              const candyEl = cupEls[i].querySelector(".cupCandy");
-              if (candyEl) {
-                candyEl.classList.add("blurWrong");
-              }
-            }
-          });
-          // 统一延迟一次性处理（避免多次 render）
-          setTimeout(() => {
-            wrongIdxs.forEach(i => {
-              row.wrongGone[i] = true;
-            });
-            row.burstDone = true;
-            renderAll();
-          }, 150);
-        }
-      }
-    });
-
+        const wrongIdxs = [];
+        // 确保 wrongGone 一定存在（否则会报错导致整页空白）
+        if (!row.wrongGone) row.wrongGone = row.marks.map(() => false);
+        row.marks.forEach((ok, i) => {
+          if (!ok) {
+            wrongIdxs.push(i);
+            const candyEl = cupEls[i].querySelector(".cupCandy");
+            if (candyEl) candyEl.classList.add("blurWrong");
+          }
+        });
+        // 先标记 done，避免 renderAll 后重复进来又 setTimeout 一次
         row.burstDone = true;
+        // 统一延迟一次性处理（避免多次 renderAll）
+        setTimeout(() => {
+          wrongIdxs.forEach(i => { row.wrongGone[i] = true; });
+          renderAll();
+        }, 150);
       }
     });
-
-    elAttempts.scrollTop = elAttempts.scrollHeight;
-  }
+    row.burstDone = true;}
+});
+  
+  elAttempts.scrollTop = elAttempts.scrollHeight;
 
   function renderAll(){
     elLevel.textContent = String(level);
@@ -893,4 +884,5 @@
 </script>
 </body>
 </html>
+
 
