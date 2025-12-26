@@ -813,32 +813,32 @@
       // 爆开视觉（不在这里播 pop，pop 已在判错时播过）
       if (row.status === "bad" && row.marks && row.stains && row.burstDone === false){
         const cupEls = slots.querySelectorAll(".cup");
-     // 错误反馈：仅糊化（无喷溅 / 无粒子 / 无 pop 动画）
-      if (row.status === "bad" && row.marks && row.burstDone === false) {
-        const cupEls = slots.querySelectorAll(".cup");
-        const wrongIdxs = [];
-
-        row.marks.forEach((ok, i) => {
-      if (!ok) {
-           wrongIdxs.push(i);
-        const candyEl = cupEls[i].querySelector(".cupCandy");
-      if (candyEl) {
-        candyEl.classList.add("blurWrong");
+        // 错误反馈：仅糊化（无喷溅 / 无粒子 / 无 pop 动画）
+        if (row.status === "bad" && row.marks && row.burstDone === false) {
+          const cupEls = slots.querySelectorAll(".cup");
+          const wrongIdxs = [];
+          row.marks.forEach((ok, i) => {
+            if (!ok) {
+              wrongIdxs.push(i);
+              const candyEl = cupEls[i].querySelector(".cupCandy");
+              if (candyEl) {
+                candyEl.classList.add("blurWrong");
+              }
+            }
+          });
+          // 统一延迟一次性处理（避免多次 render）
+          setTimeout(() => {
+            wrongIdxs.forEach(i => {
+              row.wrongGone[i] = true;
+            });
+            row.burstDone = true;
+            renderAll();
+          }, 150);
+        }
       }
-    }
-  });
+    }});
 
-  // 统一延迟一次性处理（避免多次 render）
-  setTimeout(() => {
-    wrongIdxs.forEach(i => {
-      row.wrongGone[i] = true;
-    });
-    row.burstDone = true;
-    renderAll();
-  }, 150);
-}
-
-
+        row.burstDone = true;
       }
     });
 
@@ -885,33 +885,11 @@
 }, { passive: false });
 
 })();
-  .blurWrong{
+  .blurWrong {
   filter: blur(4px);
-  opacity: .55;
-}
-  /* ===== 手机端尺寸自适配（不改外观） ===== */
-:root{
-  --cupW: clamp(52px, 9.5vw, 90px);
-  --cupH: calc(var(--cupW) * 0.96);
-  --candyW: calc(var(--cupW) * 0.86);
-  --candyH: calc(var(--cupW) * 0.64);
-}
-
-/* 覆盖原本写死的尺寸 */
-.cup{
-  width: var(--cupW) !important;
-  height: var(--cupH) !important;
-}
-.candy{
-  width: var(--candyW) !important;
-  height: var(--candyH) !important;
-}
-.cupCandy{
-  width: var(--candyW) !important;
-  height: var(--candyH) !important;
+  opacity: 0.55;
 }
 
 </script>
 </body>
 </html>
-
