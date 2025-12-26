@@ -1,4 +1,4 @@
-const CACHE_NAME = "gummy-match-v2";
+const CACHE_NAME = "gummy-match-v3";
 const ASSETS = [
   "./",
   "./color-match.html",
@@ -31,4 +31,5 @@ self.addEventListener("fetch", (event) => {
     caches.match(event.request).then((cached) => cached || fetch(event.request))
   );
 });
+
 
