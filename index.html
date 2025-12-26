@@ -810,31 +810,35 @@
       card.appendChild(slots);
       elAttempts.appendChild(card);
 
-      if (row.status === "bad" && row.marks && row.burstDone === false) {
+      // 爆开视觉（不在这里播 pop，pop 已在判错时播过）
+      if (row.status === "bad" && row.marks && row.stains && row.burstDone === false){
         const cupEls = slots.querySelectorAll(".cup");
-        const wrongIdxs = [];
-        // 确保 wrongGone 一定存在（否则会报错导致整页空白）
-        if (!row.wrongGone) row.wrongGone = row.marks.map(() => false);
+
         row.marks.forEach((ok, i) => {
-          if (!ok) {
-            wrongIdxs.push(i);
+          if (!ok){
+            const hex = row.stains[i];
+            addSplat(cupEls[i], hex);
+            spawnParticles(cupEls[i], hex);
+
             const candyEl = cupEls[i].querySelector(".cupCandy");
-            if (candyEl) candyEl.classList.add("blurWrong");
+            if (candyEl){
+              candyEl.classList.add("pop");
+              setTimeout(() => {
+                row.wrongGone[i] = true;
+                renderAll();
+              }, 280);
+            } else {
+              row.wrongGone[i] = true;
+            }
           }
         });
-        // 先标记 done，避免 renderAll 后重复进来又 setTimeout 一次
+
         row.burstDone = true;
-        // 统一延迟一次性处理（避免多次 renderAll）
-        setTimeout(() => {
-          wrongIdxs.forEach(i => { row.wrongGone[i] = true; });
-          renderAll();
-        }, 150);
       }
     });
-    row.burstDone = true;}
-});
-  
-  elAttempts.scrollTop = elAttempts.scrollHeight;
+
+    elAttempts.scrollTop = elAttempts.scrollHeight;
+  }
 
   function renderAll(){
     elLevel.textContent = String(level);
@@ -876,13 +880,6 @@
 }, { passive: false });
 
 })();
-  .blurWrong {
-  filter: blur(4px);
-  opacity: 0.55;
-}
-
 </script>
 </body>
 </html>
-
-
