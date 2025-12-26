@@ -688,22 +688,18 @@
         cup.className = "cup";
         cup.dataset.row = String(idx);
         cup.dataset.slot = String(s);
-        // ===== 正确 / 错误 外圈标记（就在创建 cup 后） =====
-        cup.classList.remove("isCorrect", "isWrong");
-        cup.style.removeProperty("--ring");
         
-        // 当前这个杯子里放的糖（可能是 undefined / null）
+        // ===== ✅/❌ 外圈标记：只在该行已判定(ok/bad)后显示 =====
+        cup.classList.remove("isCorrect", "isWrong");
+        cup.style.removeProperty("--ringColor");
+
         const placed = row.guess?.[s];
-        const target = correctSeq?.[s];
-        if (Number.isFinite(placed)) {
-          if (placed === target) {
-            // ✅ 正确：绿色外圈
+        if (row.status !== "active" && row.marks && Number.isFinite(placed)) {
+          if (row.marks[s]) {
             cup.classList.add("isCorrect");
           } else {
-            // ❌ 错误：外圈用“放进去的糖果颜色”
             cup.classList.add("isWrong");
-            const hex = COLOR_POOL?.[placed]?.hex || "#ff5a5a";
-            cup.style.setProperty("--ring", hex);
+            cup.style.setProperty("--ringColor", COLOR_POOL?.[placed]?.hex || "#ff5a5a");
           }
         }
 
@@ -772,44 +768,32 @@
     });
   }
 })();
-  /* ✅/❌ 外圈高亮（只影响杯子外圈，不影响糖果本体） */
-  .cup{position: relative;
-      }
-
-  /* 用伪元素画“外圈” */
-  .cup::after{
-    content:"";
-    position:absolute;
-    inset: 6px;                 /* 外圈离边缘的距离：你想更粗就调小一点 */
-    border-radius: 999px;
-    pointer-events:none;
-    border: 2px solid rgba(255,255,255,.10);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
-    opacity: 0;                 /* 默认不显示（只有对了/错了才显示） */
-    transition: opacity .12s ease, border-color .12s ease, box-shadow .12s ease;
+  /* ===== ✅/❌ 外圈高亮：用变量叠加，不占用 ::before/::after（避免覆盖杯子原高光） ===== */
+  .cup{
+    --ringColor: rgba(255,90,90,.95);
+    --ringShadow: 0 0 0 0 rgba(0,0,0,0); /* 默认不显示 */
+    box-shadow:
+      inset 0 18px 26px rgba(0,0,0,.30),
+      inset 0 -18px 30px rgba(255,255,255,.04),
+      0 14px 28px rgba(0,0,0,.30),
+      var(--ringShadow); /* ✅ 叠加外圈效果 */
   }
-  
   /* ✅ 正确：绿圈 */
-  .cup.isCorrect::after{
-    opacity: 1;
-    border-color: rgba(40, 220, 140, .95);
-    box-shadow:
-    0 0 0 2px rgba(40, 220, 140, .22),
-      0 0 14px rgba(40, 220, 140, .35),
-      inset 0 0 0 1px rgba(40, 220, 140, .20);
+  .cup.isCorrect{
+    --ringShadow:
+      0 0 0 3px rgba(40,220,140,.95),
+      0 0 16px rgba(40,220,140,.35);
   }
-  /* ❌ 错误：用变量 --ring 直接上色（等下 JS 会把颜色塞进来） */
-  .cup.isWrong::after{
-    opacity: 1;
-    border-color: var(--ring, rgba(255,90,90,.95));
-    box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--ring) 22%, transparent),
-    0 0 14px color-mix(in srgb, var(--ring) 35%, transparent),
-      inset 0 0 0 1px color-mix(in srgb, var(--ring) 20%, transparent);
+  /* ❌ 错误：用放进去的糖果颜色 */
+  .cup.isWrong{
+    --ringShadow:
+    0 0 0 3px var(--ringColor),
+    0 0 16px rgba(255,255,255,.06);
   }
 
 </script>
 </body>
 </html>
+
 
 
