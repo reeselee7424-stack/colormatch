@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
-  <title>汽水灌装厂</title>
+  <title>小明汽水流水线</title>
 
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#2e2e2e">
@@ -29,7 +29,7 @@
       overflow:hidden;
       background: #1a1a1a;
       user-select: none;
-      -webkit-user-select: none;
+      -webkit-user-select: none; /* iOS Safari */
     }
 
     /* ===== 背景装饰 ===== */
@@ -75,7 +75,7 @@
       flex: 1;
       display: grid;
       /* 历史区(自适应) | 货架(固定) */
-      grid-template-columns: 1fr 96px; 
+      grid-template-columns: 1fr 100px; 
       gap: 16px;
       overflow: hidden; 
       background: rgba(0, 0, 0, 0.2);
@@ -85,7 +85,7 @@
       box-shadow: inset 0 0 30px rgba(0,0,0,0.6);
     }
 
-    /* --- 左侧：传送带区域 (History) --- */
+    /* --- 左侧：流水线区域 (History) --- */
     .history-viewport {
       display: flex;
       flex-direction: row;
@@ -94,7 +94,10 @@
       overflow-y: hidden;
       padding-bottom: 10px;
       align-items: stretch;
-      scroll-behavior: smooth; /* 平滑滚动 */
+      scroll-behavior: smooth;
+      
+      /* ✅ 关键修改：让内容靠右对齐（靠近红色方框区域） */
+      justify-content: flex-end; 
     }
     .history-viewport::-webkit-scrollbar { height: 6px; }
     .history-viewport::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
@@ -108,22 +111,21 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       overflow-y: auto;
       box-shadow: inset 0 0 10px #000;
-      /* 木纹货架背景 */
       background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 20px);
     }
     .shelf-column::-webkit-scrollbar { width: 0; }
 
     /* ===== 每一列 (Column Card) ===== */
     .rowCard {
-      /* 高级木纹 */
       background-color: #4e342e;
+      /* 木纹 SVG */
       background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%232d1d18' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M0 0h40v40H0V0zm20 20h20v20H20V20zM0 20h20v20H0V20zM20 0h20v20H20V0z'/%3E%3C/g%3E%3C/svg%3E");
       
       border: 2px solid #3e2723;
-      border-right: 4px solid #281a16; /* 右侧加厚，产生立体感 */
+      border-right: 4px solid #281a16;
       border-bottom: 4px solid #281a16;
       border-radius: 6px;
       padding: 8px;
@@ -131,7 +133,7 @@
       
       display: flex;
       flex-direction: column;
-      min-width: 64px;
+      min-width: 70px; /* 稍微加宽一点 */
       justify-content: center;
       transition: transform 0.3s;
     }
@@ -139,23 +141,22 @@
       border-color: #fbbf24;
       background-color: #5d4037;
       box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
-      transform: scale(1.02); /* 当前列稍微大一点 */
+      z-index: 2; /* 保证当前列层级较高 */
     }
 
     .slots {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       align-items: center;
     }
 
     /* ===== 格子 (Grid Cell) ===== */
     .cup {
-      width: 48px; height: 60px; /* 格子高度 */
+      width: 52px; height: 64px;
       background: #261613;
-      border-radius: 4px;
+      border-radius: 6px;
       position: relative;
-      /* 内陷感 */
       box-shadow: inset 0 3px 8px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.05);
       border: 1px solid #3e2723;
       display: flex;
@@ -163,84 +164,85 @@
       align-items: center; 
     }
     .cup.dropHover { 
-      background: #3e2a26; 
+      background: #4a302a; 
       outline: 2px dashed #fbbf24; 
+      transform: scale(1.05); /* 微微放大提示 */
     }
     .cup.isWrong { border: 2px solid #ef4444; }
     .cup.isCorrect { border: 2px solid #22c55e; }
 
-    /* ===== 易拉罐 (Soda Can) ===== */
+    /* ===== 易拉罐 (Soda Can) - 小明特供版 ===== */
     .can {
-      width: 34px; height: 52px;
+      width: 38px; height: 56px;
       position: relative;
       z-index: 10;
-      /* 金属罐身 */
-      background: linear-gradient(90deg, #9ca3af 0%, #e5e7eb 40%, #9ca3af 100%);
-      border-radius: 6px 6px 10px 10px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+      /* 瓶身：改为对应颜色 */
+      background-color: var(--can-color);
+      /* 简单的金属光泽遮罩 */
+      background-image: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.4) 40%, rgba(0,0,0,0.1) 100%);
+      
+      border-radius: 8px 8px 12px 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
       cursor: grab;
+      touch-action: none; /* 关键：防止原生滚动干扰 */
     }
+    .can:active { cursor: grabbing; }
     
-    /* 罐子顶部轮廓 */
+    /* 罐子顶部金属环 */
     .can::before {
       content: "";
       position: absolute;
-      top: -3px; left: 2px; right: 2px; height: 6px;
+      top: -4px; left: 3px; right: 3px; height: 6px;
       background: #d1d5db;
       border-radius: 4px;
       border: 1px solid #9ca3af;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
 
-    /* 白色标签带 */
+    /* 🏷️ 标签区域：小明图片 */
     .can-label {
       position: absolute;
-      top: 12px; bottom: 12px; 
+      top: 14px; bottom: 10px; 
       left: 0; right: 0;
-      background: rgba(255,255,255,0.9);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background: #fff; /* 白底 */
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
       z-index: 2;
+      
+      /* ✅ 图片引入：默认文件名 xiaoming.jpg */
+      background-image: url('xiaoming.jpg'); 
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
     }
     
-    /* 中间的颜色标 (Logo) */
-    .can-logo {
-      width: 22px; height: 22px;
-      background-color: var(--can-color);
-      border-radius: 50%;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-      border: 2px solid white;
-    }
-
     /* 拖拽时的幽灵元素 */
     .drag-ghost {
       position: fixed;
-      pointer-events: none;
-      z-index: 999;
-      transform: translate(-50%, -50%) scale(1.1);
+      pointer-events: none !important; /* ✅ 关键修复：必须穿透点击 */
+      z-index: 9999;
+      transform: translate(-50%, -50%) scale(1.15) rotate(5deg);
       opacity: 0.9;
-      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+      filter: drop-shadow(0 15px 30px rgba(0,0,0,0.6));
     }
 
     /* ===== 爆炸污渍 ===== */
     .residue {
       position: absolute;
-      inset: -5px;
+      inset: -8px;
       background: var(--residue-color);
       mask-image: radial-gradient(circle, black 30%, transparent 70%);
       -webkit-mask-image: radial-gradient(circle, black 30%, transparent 70%);
-      opacity: 0.9;
+      opacity: 0.95;
       z-index: 5;
-      animation: splash 0.3s ease-out forwards;
+      animation: splash 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
     @keyframes splash {
-      0% { transform: scale(0.5); opacity: 0; }
-      100% { transform: scale(1.2); opacity: 0.9; }
+      0% { transform: scale(0.2); opacity: 0; }
+      100% { transform: scale(1); opacity: 0.95; }
     }
 
     .paletteItem { margin-top: 5px; }
-    .used .can { opacity: 0.3; filter: grayscale(1); cursor: default; }
+    .used .can { opacity: 0.4; filter: grayscale(0.8); cursor: default; }
 
   </style>
 </head>
@@ -255,15 +257,15 @@
   <div class="wrap">
     <header>
       <div>
-        <h1>🏭 汽水流水线</h1>
+        <h1>🏭 小明汽水流水线</h1>
         <div class="meta">
-          <span>Level: <b id="level">1</b></span>
+          <span>批次: <b id="level">1</b></span>
           <button class="btn" id="soundBtn">🔇</button>
         </div>
       </div>
       <div style="text-align:right">
-        <button class="btn" id="resetLevel">重置本关</button>
-        <button class="btn" id="restart" style="background:#8c2f2f; border-color:#5c1e1e;">重新开始</button>
+        <button class="btn" id="resetLevel">重置</button>
+        <button class="btn" id="restart" style="background:#8c2f2f; border-color:#5c1e1e;">重开</button>
       </div>
     </header>
 
@@ -278,23 +280,25 @@
 (() => {
   /* ===== 核心配置 ===== */
   const COLOR_POOL = [
-    {name:"可乐红", hex:"#dc2626"}, 
-    {name:"芬达橙", hex:"#ea580c"}, 
-    {name:"柠檬黄", hex:"#eab308"}, 
-    {name:"雪碧绿", hex:"#16a34a"}, 
-    {name:"海盐青", hex:"#06b6d4"}, 
-    {name:"百事蓝", hex:"#2563eb"}, 
-    {name:"葡萄紫", hex:"#9333ea"}, 
-    {name:"桃子粉", hex:"#db2777"}, 
-    {name:"咖啡棕", hex:"#5d4037"}, 
+    {name:"草莓", hex:"#ef4444"}, 
+    {name:"甜橙", hex:"#f97316"}, 
+    {name:"柠檬", hex:"#eab308"}, 
+    {name:"青苹果", hex:"#22c55e"}, 
+    {name:"海盐", hex:"#06b6d4"}, 
+    {name:"蓝莓", hex:"#3b82f6"}, 
+    {name:"葡萄", hex:"#a855f7"}, 
+    {name:"桃子", hex:"#ec4899"}, 
+    {name:"咖啡", hex:"#5d4037"}, 
   ];
   
-  const SAVE_KEY = "soda_factory_v3";
+  const SAVE_KEY = "xiaoming_soda_v4";
   
   // 音频
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
+  
+  // 设置源文件（请确保文件存在）
   bgSoda.src = "soda.mp3"; sfxPop.src = "pop.mp3"; sfxCorrect.src = "correct.mp3";
   let soundOn = false;
 
@@ -340,7 +344,7 @@
   function pairsForLevel(lvl) {
     if (lvl === 1) return 3;
     const base = 4 + Math.floor((lvl - 2) / 3);
-    return Math.min(base, 6); // 竖排不要太高，限制6个
+    return Math.min(base, 6); 
   }
 
   function setupLevel(isNew = true) {
@@ -384,8 +388,8 @@
     row.marks = marks;
     row.status = allCorrect ? "ok" : "bad";
 
-    // 错误处理：记录污渍
     if (!allCorrect) {
+      // 记录污渍
       row.residue = row.guess.map((id, i) => marks[i] ? null : COLOR_POOL[id].hex);
       playSound(sfxPop);
     } else {
@@ -395,12 +399,11 @@
     saveGame();
     renderAll();
     
-    // 延迟操作
     if (allCorrect) {
       setTimeout(() => { level++; setupLevel(true); }, 1200);
     } else {
       setTimeout(() => {
-        // 新增一列，active index增加
+        // 新增一列
         attempts.push({
           guess: Array(pairCount).fill(null),
           status: "active",
@@ -409,7 +412,7 @@
         activeRowIndex++;
         saveGame();
         renderAll();
-        // 自动滚到最右侧，视觉上像旧的往左移了
+        // 自动滚动到最右侧
         scrollToEnd(); 
       }, 600);
     }
@@ -420,18 +423,16 @@
   const elPalette = document.getElementById("palette");
 
   function scrollToEnd() {
+    // 强制滚动到最右边，确保看到最新的列
     elAttempts.scrollTo({ left: elAttempts.scrollWidth, behavior: 'smooth' });
   }
 
-  // 创建易拉罐 DOM
   function createCanHTML(colorId) {
     const hex = COLOR_POOL[colorId].hex;
-    // 易拉罐结构：主体 -> 标签带 -> 颜色Logo
+    // 瓶身带色，标签用图片
     return `
       <div class="can" style="--can-color:${hex}">
-        <div class="can-label">
-          <div class="can-logo"></div>
-        </div>
+        <div class="can-label"></div>
       </div>
     `;
   }
@@ -446,12 +447,12 @@
       wrap.className = "paletteItem";
       if (usedIds.has(id)) wrap.classList.add("used");
 
-      // 包装一个可交互容器
+      // 包装容器
       const canDiv = document.createElement("div");
       canDiv.innerHTML = createCanHTML(id);
       const canEl = canDiv.firstElementChild;
 
-      // 绑定触摸事件
+      // 绑定拖拽
       addDragLogic(canEl, id);
 
       wrap.appendChild(canEl);
@@ -490,21 +491,18 @@
           const isCorrect = row.marks && row.marks[i];
           const isFinished = row.status !== "active";
           
-          // 如果结束了，只显示正确的；或者还没结束显示所有
           if (!isFinished || isCorrect) {
             const canWrap = document.createElement("div");
             canWrap.innerHTML = createCanHTML(cid);
             const canEl = canWrap.firstElementChild;
-            // 已经在格子里了，不需要拖拽逻辑，除非你想把瓶子拿出来（这里简化为不可拿出）
             cup.appendChild(canEl);
             if (isFinished && isCorrect) cup.classList.add("isCorrect");
           }
         }
 
-        // 3. 放置区域交互
+        // 3. 交互区 (如果这行是激活状态)
         if (row.status === "active") {
-           // 允许放下
-           // 简单的点击放置逻辑 (备用) 或 拖拽响应
+          // 如果需要点击放置也可以在这里加，但目前主要靠拖拽
         }
 
         slots.appendChild(cup);
@@ -520,43 +518,50 @@
     renderAttempts();
   }
 
-  /* ===== 拖拽系统 (Mouse & Touch 统一跟随) ===== */
+  /* ===== 修复后的拖拽系统 ===== */
   function addDragLogic(el, colorId) {
     
+    const startDrag = (x, y) => {
+      draggingColorId = colorId;
+      createGhost(x, y, colorId);
+    };
+
+    const moveDrag = (x, y) => {
+      moveGhost(x, y);
+      highlightCup(x, y);
+    };
+
+    const endDrag = (x, y) => {
+      dropAt(x, y);
+      removeGhost();
+    };
+
     // --- Touch ---
     el.addEventListener("touchstart", e => {
-      e.preventDefault(); // 阻止滚动
-      draggingColorId = colorId;
-      const touch = e.touches[0];
-      createGhost(touch.clientX, touch.clientY, colorId);
+      // e.preventDefault(); // 注释掉，防止影响页面其他部分，但如果需要禁止滚动则保留
+      const t = e.touches[0];
+      startDrag(t.clientX, t.clientY);
     }, {passive: false});
 
     el.addEventListener("touchmove", e => {
-      e.preventDefault();
+      e.preventDefault(); // 必须，防止拖动时屏幕滚动
       if (!dragGhostEl) return;
-      const touch = e.touches[0];
-      moveGhost(touch.clientX, touch.clientY);
-      highlightCup(touch.clientX, touch.clientY);
+      const t = e.touches[0];
+      moveDrag(t.clientX, t.clientY);
     }, {passive: false});
 
     el.addEventListener("touchend", e => {
-      const touch = e.changedTouches[0];
-      dropAt(touch.clientX, touch.clientY);
-      removeGhost();
+      const t = e.changedTouches[0];
+      endDrag(t.clientX, t.clientY);
     });
 
     // --- Mouse ---
     el.addEventListener("mousedown", e => {
-      draggingColorId = colorId;
-      createGhost(e.clientX, e.clientY, colorId);
+      startDrag(e.clientX, e.clientY);
       
-      const onMove = ev => {
-        moveGhost(ev.clientX, ev.clientY);
-        highlightCup(ev.clientX, ev.clientY);
-      };
+      const onMove = ev => moveDrag(ev.clientX, ev.clientY);
       const onUp = ev => {
-        dropAt(ev.clientX, ev.clientY);
-        removeGhost();
+        endDrag(ev.clientX, ev.clientY);
         window.removeEventListener("mousemove", onMove);
         window.removeEventListener("mouseup", onUp);
       };
@@ -614,6 +619,7 @@
   }
 
   function getCupAt(x, y) {
+    // 关键点：因为 dragGhost 有 pointer-events: none，所以这里能取到底下的元素
     const el = document.elementFromPoint(x, y);
     return el ? el.closest(".cup") : null;
   }
