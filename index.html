@@ -28,10 +28,10 @@
       font-family: system-ui, sans-serif;
       color:var(--text);
       overflow:hidden;
-      background: #2b2b2b; /* 深色背景衬托木纹 */
+      background: #2b2b2b;
     }
 
-    /* ===== 背景装饰（简化） ===== */
+    /* ===== 背景装饰 ===== */
     .bg-texture{
       position:fixed; inset:0; z-index:0; pointer-events:none;
       background: radial-gradient(circle at 50% 30%, #4a4a4a, #1a1a1a);
@@ -39,8 +39,8 @@
 
     /* ===== 主界面布局 ===== */
     .wrap{ 
-      width: min(1000px, 96vw); 
-      height: 90vh;
+      width: min(1000px, 98vw); 
+      height: 92vh; /* 稍微增加高度以适应竖列 */
       position:relative; 
       z-index:1; 
       display: flex;
@@ -49,16 +49,17 @@
 
     header{
       display:flex; justify-content:space-between; align-items:center;
-      padding-bottom: 10px;
+      padding-bottom: 8px;
     }
-    h1{ margin:0; font-size:20px; color: #fbbf24; text-shadow: 2px 2px 0 #000; }
+    h1{ margin:0; font-size:18px; color: #fbbf24; text-shadow: 2px 2px 0 #000; }
     
-    .meta{ display:flex; gap:10px; font-size:14px; align-items:center; }
+    .meta{ display:flex; gap:10px; font-size:13px; align-items:center; }
     .btn{
       background: #5d4037;
       color: #fff;
       border: 1px solid #795548;
-      padding: 6px 12px;
+      padding: 4px 10px;
+      font-size: 12px;
       border-radius: 6px;
       cursor: pointer;
       box-shadow: 0 4px 6px rgba(0,0,0,0.3);
@@ -69,27 +70,32 @@
     .game-board {
       flex: 1;
       display: grid;
-      grid-template-columns: 1fr 100px; /* 左侧配对区(宽)，右侧货架(窄) */
-      gap: 16px;
-      overflow: hidden; /* 内部滚动 */
+      /* 左侧历史区(自适应)，右侧货架(固定宽) */
+      grid-template-columns: 1fr 90px; 
+      gap: 12px;
+      overflow: hidden; 
       background: rgba(255, 255, 255, 0.05);
       border-radius: 12px;
       padding: 12px;
       box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
     }
 
-    /* --- 左列：尝试记录区 --- */
+    /* --- 左列：历史记录区 (变成横向滚动) --- */
     .history-column {
       display: flex;
-      flex-direction: column;
+      flex-direction: row; /* ✅ 关键改变：横向排列 */
       gap: 12px;
-      overflow-y: auto;
-      padding-right: 8px;
+      overflow-x: auto; /* ✅ 横向滚动 */
+      overflow-y: hidden;
+      padding-bottom: 8px; /* 滚动条空间 */
+      align-items: stretch; /* 让卡片高度一致 */
     }
-    .history-column::-webkit-scrollbar { width: 6px; }
+    /* 美化横向滚动条 */
+    .history-column::-webkit-scrollbar { height: 8px; }
     .history-column::-webkit-scrollbar-thumb { background: #666; border-radius: 4px; }
+    .history-column::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
 
-    /* --- 右列：汽水货架 --- */
+    /* --- 右列：汽水货架 (保持竖直) --- */
     .shelf-column {
       background: #3e2723;
       border: 4px solid #281a16;
@@ -98,34 +104,43 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       overflow-y: auto;
       box-shadow: inset 0 0 10px #000;
     }
+    .shelf-column::-webkit-scrollbar { width: 0px; } /* 隐藏右侧滚动条 */
 
-    /* ===== 木质行 (Row) ===== */
-    .rowCard{
+    /* ===== 竖向卡片 (Column Card) ===== */
+    .rowCard {
+      /* 木纹背景 */
       background: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="%235d4037"/><path d="M0 0h100v2H0z" fill="%23795548" opacity=".5"/></svg>');
       background-size: cover;
       border: 2px solid #3e2723;
       border-radius: 8px;
-      padding: 10px;
+      padding: 8px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      
+      display: flex;
+      flex-direction: column; /* ✅ 内部元素竖直排列 */
+      min-width: 60px; /* 确保宽度足够放瓶子 */
+      justify-content: center;
     }
     .rowCard.active {
       border-color: #fbbf24;
       box-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
+      background-color: #6d4c41; /*稍微亮一点*/
     }
 
     .slots{
       display: flex;
-      justify-content: center;
+      flex-direction: column; /* ✅ 游戏槽改为竖列 */
       gap: 10px;
+      align-items: center;
     }
 
     /* ===== 木格子 (Grid) ===== */
     .cup {
-      width: 50px; height: 80px; /* 适合瓶子的高瘦比例 */
+      width: 46px; height: 72px; /* 调整尺寸适应竖屏布局 */
       background: #2e1e1a;
       border-radius: 4px;
       position: relative;
@@ -133,16 +148,15 @@
       border: 1px solid #4e342e;
       display: flex;
       justify-content: center;
-      align-items: flex-end; /* 瓶子放在底部 */
+      align-items: flex-end;
     }
     .cup.dropHover { background: #4a342e; outline: 2px dashed #fbbf24; }
 
     /* ===== 汽水瓶 (Bottle) ===== */
     .candy {
-      width: 32px; height: 70px; /* 瓶身 */
+      width: 28px; height: 60px; /* 瓶身缩小一点点 */
       position: relative;
       border-radius: 4px 4px 8px 8px;
-      /* 玻璃质感 */
       box-shadow: 
         inset -2px 0 4px rgba(0,0,0,0.3),
         inset 2px 0 4px rgba(255,255,255,0.3),
@@ -157,8 +171,8 @@
     .candy::before {
       content: "";
       position: absolute;
-      top: -12px; left: 50%; transform: translateX(-50%);
-      width: 14px; height: 12px;
+      top: -10px; left: 50%; transform: translateX(-50%);
+      width: 12px; height: 10px;
       background: inherit;
       opacity: 0.8;
       border: 1px solid rgba(255,255,255,0.2);
@@ -167,21 +181,21 @@
     .candy::after {
       content: "";
       position: absolute;
-      top: -16px; left: 50%; transform: translateX(-50%);
-      width: 18px; height: 4px;
+      top: -14px; left: 50%; transform: translateX(-50%);
+      width: 16px; height: 4px;
       background: #ccc;
       border-radius: 2px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.5);
     }
 
-    /* 瓶子放在杯子里时的微调 */
+    /* 瓶子放在杯子里时的位置 */
     .cupCandy {
       position: absolute;
       bottom: 4px; left: 50%; transform: translateX(-50%);
       cursor: default;
     }
 
-    /* ===== 爆炸残留 (Residue / Stain) ===== */
+    /* ===== 爆炸残留 (Residue) ===== */
     .cup .residue {
       position: absolute;
       inset: 0;
@@ -198,12 +212,11 @@
       100% { transform: scale(1); opacity: 0.8; }
     }
 
-    /* 错误/正确状态的格子边框提示 */
+    /* 状态边框 */
     .cup.isWrong { border: 2px solid #ef4444; }
     .cup.isCorrect { border: 2px solid #22c55e; }
     
-    /* 货架上的瓶子 */
-    .paletteItem { margin-top: 10px; }
+    .paletteItem { margin-top: 5px; }
     .used { opacity: 0.3; filter: grayscale(1); }
 
   </style>
@@ -226,8 +239,8 @@
         </div>
       </div>
       <div style="text-align:right">
-        <button class="btn" id="resetLevel" style="font-size:12px">重置本关</button>
-        <button class="btn" id="restart" style="font-size:12px;background:#c62828">重新开始</button>
+        <button class="btn" id="resetLevel">重置</button>
+        <button class="btn" id="restart" style="background:#c62828">重开</button>
       </div>
     </header>
 
@@ -240,7 +253,7 @@
 
 <script>
 (() => {
-  /* ===== 初始化与配置 ===== */
+  /* ===== 初始化 ===== */
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
@@ -253,24 +266,22 @@
   let soundOn = false;
 
   const COLOR_POOL = [
-    {name:"可乐红", hex:"#b91c1c"}, // Red
-    {name:"芬达橙", hex:"#ea580c"}, // Orange
-    {name:"柠檬黄", hex:"#eab308"}, // Yellow
-    {name:"雪碧绿", hex:"#15803d"}, // Green
-    {name:"海盐青", hex:"#06b6d4"}, // Cyan
-    {name:"百事蓝", hex:"#1e40af"}, // Blue
-    {name:"葡萄紫", hex:"#7e22ce"}, // Purple
-    {name:"桃子粉", hex:"#be185d"}, // Pink
-    {name:"咖啡棕", hex:"#451a03"}, // Brown
+    {name:"可乐红", hex:"#b91c1c"}, 
+    {name:"芬达橙", hex:"#ea580c"}, 
+    {name:"柠檬黄", hex:"#eab308"}, 
+    {name:"雪碧绿", hex:"#15803d"}, 
+    {name:"海盐青", hex:"#06b6d4"}, 
+    {name:"百事蓝", hex:"#1e40af"}, 
+    {name:"葡萄紫", hex:"#7e22ce"}, 
+    {name:"桃子粉", hex:"#be185d"}, 
+    {name:"咖啡棕", hex:"#451a03"}, 
   ];
 
-  /* ===== 记忆功能 (LocalStorage) ===== */
-  const SAVE_KEY = "soda_match_save_v1";
+  const SAVE_KEY = "soda_match_save_v2"; // 升级版本号以防冲突
 
+  /* ===== 存档管理 ===== */
   function saveGame() {
-    const state = {
-      level, pairCount, ids, correctSeq, attempts, activeRowIndex
-    };
+    const state = { level, pairCount, ids, correctSeq, attempts, activeRowIndex };
     localStorage.setItem(SAVE_KEY, JSON.stringify(state));
   }
 
@@ -279,40 +290,33 @@
     if (!raw) return false;
     try {
       const state = JSON.parse(raw);
+      if (!state.attempts || !state.ids) return false;
       level = state.level || 1;
       pairCount = state.pairCount || 3;
       ids = state.ids || [];
       correctSeq = state.correctSeq || [];
       attempts = state.attempts || [];
       activeRowIndex = state.activeRowIndex || 0;
-      
-      // 简单的校验，防止坏档
-      if (!attempts.length || !ids.length) return false;
       return true;
-    } catch(e) {
-      console.error("Save file corrupted", e);
-      return false;
-    }
+    } catch(e) { return false; }
   }
 
-  /* ===== 游戏逻辑变量 ===== */
+  /* ===== 游戏状态 ===== */
   let level = 1;
   let pairCount = 3;
   let ids = [];
   let correctSeq = [];
   let attempts = [];
   let activeRowIndex = 0;
-  
   let draggingColorId = null;
-  let touchHoverCup = null;
 
-  /* ===== 核心逻辑函数 ===== */
+  /* ===== 逻辑函数 ===== */
   const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
 
   function pairsForLevel(lvl){
     if (lvl === 1) return 3;
     const base = 4 + Math.floor((lvl - 2) / 3);
-    return Math.min(base, 9); // 上限9个
+    return Math.min(base, 7); // 竖列太高了放不下，限制最大7个
   }
 
   function setupLevel(isNew = true){
@@ -320,31 +324,30 @@
       pairCount = pairsForLevel(level);
       const allIds = COLOR_POOL.map((_, i) => i);
       ids = shuffle(allIds).slice(0, pairCount);
-      correctSeq = shuffle([...ids]); // 随机答案序列
+      correctSeq = shuffle([...ids]); 
 
       attempts = [{
         guess: Array(pairCount).fill(null),
         status: "active",
-        residue: Array(pairCount).fill(null), // 记录爆炸污渍颜色
+        residue: Array(pairCount).fill(null),
       }];
       activeRowIndex = 0;
     }
     saveGame();
     renderAll();
+    setTimeout(scrollToEnd, 50); // 确保新关卡滚动到最右
   }
 
   function placeColor(rowIdx, cupIdx, colorId){
     const row = attempts[rowIdx];
     if (!row || row.status !== "active") return;
 
-    // 如果这个颜色已经在别的地方，先清空旧位置
+    // 去重逻辑：如果该颜色已在同一列其他位置，移除它
     const prevPos = row.guess.findIndex(v => v === colorId);
-    if (prevPos !== -1 && prevPos !== cupIdx){
-      row.guess[prevPos] = null;
-    }
+    if (prevPos !== -1 && prevPos !== cupIdx) row.guess[prevPos] = null;
     
     row.guess[cupIdx] = colorId;
-    saveGame(); // 每次操作都保存
+    saveGame();
     renderAll();
 
     // 检查是否填满
@@ -361,8 +364,7 @@
     row.status = allCorrect ? "ok" : "bad";
 
     if (!allCorrect) {
-      // ❌ 错误：计算残留颜色，然后移除瓶子
-      // 逻辑：如果这个格子错了，记录下当前瓶子的颜色作为污渍，显示爆炸效果
+      // 错误：记录污渍，播放爆炸音效
       row.residue = row.guess.map((id, i) => marks[i] ? null : COLOR_POOL[id].hex);
       playOne(sfxPop);
     } else {
@@ -379,7 +381,6 @@
       }, 1000);
     } else {
       setTimeout(() => {
-        // 新增一行
         attempts.push({
           guess: Array(pairCount).fill(null),
           status: "active",
@@ -388,15 +389,19 @@
         activeRowIndex++;
         saveGame();
         renderAll();
-        // 自动滚动到底部
-        document.getElementById("attempts").scrollTop = 9999;
+        scrollToEnd(); // 滚动到最新的那一列
       }, 600);
     }
   }
 
-  /* ===== 渲染 DOM ===== */
+  /* ===== 渲染 ===== */
   const elAttempts = document.getElementById("attempts");
   const elPalette = document.getElementById("palette");
+
+  // 辅助：滚动到最右边
+  function scrollToEnd() {
+    elAttempts.scrollLeft = elAttempts.scrollWidth;
+  }
 
   function makeCandy(colorId, isCup){
     const c = COLOR_POOL[colorId];
@@ -413,10 +418,7 @@
         draggingColorId = colorId;
         e.dataTransfer.setData("text/plain", colorId);
       });
-      // 触摸支持
-      d.addEventListener("touchstart", e => {
-        draggingColorId = colorId;
-      }, {passive: true});
+      d.addEventListener("touchstart", e => { draggingColorId = colorId; }, {passive: true});
     }
     return d;
   }
@@ -439,17 +441,18 @@
   function renderAttempts(){
     elAttempts.innerHTML = "";
     attempts.forEach((row, rIdx) => {
+      // 外层是 RowCard，但在视觉上现在是一列
       const rowDiv = document.createElement("div");
       rowDiv.className = "rowCard" + (rIdx === activeRowIndex ? " active" : "");
       
       const slotDiv = document.createElement("div");
-      slotDiv.className = "slots";
+      slotDiv.className = "slots"; // CSS里设为 column
 
       for(let i=0; i<pairCount; i++){
         const cup = document.createElement("div");
         cup.className = "cup";
         
-        // 显示污渍 (错误后的爆炸痕迹)
+        // 渲染污渍
         if (row.residue && row.residue[i]) {
            const splat = document.createElement("div");
            splat.className = "residue";
@@ -458,14 +461,13 @@
            cup.classList.add("isWrong");
         }
 
-        // 显示瓶子
+        // 渲染瓶子
         const contentId = row.guess[i];
         if (contentId !== null) {
-          // 如果这行已经判定且错误，瓶子应该“爆开消失”
-          // 但为了显示效果，我们只移除错误的瓶子，保留正确的瓶子
           const isFinished = row.status !== "active";
           const isCorrectSlot = row.marks && row.marks[i];
           
+          // 逻辑：如果本轮结束了，只有正确的瓶子留下来，错误的爆掉了
           if (!isFinished || isCorrectSlot) {
              const bottle = makeCandy(contentId, true);
              cup.appendChild(bottle);
@@ -473,7 +475,7 @@
           }
         }
 
-        // 拖放事件 (仅当前行有效)
+        // 交互事件
         if (row.status === "active") {
           cup.addEventListener("dragover", e => { e.preventDefault(); cup.classList.add("dropHover"); });
           cup.addEventListener("dragleave", () => cup.classList.remove("dropHover"));
@@ -483,8 +485,6 @@
             const cid = parseInt(e.dataTransfer.getData("text/plain"));
             if (!isNaN(cid)) placeColor(rIdx, i, cid);
           });
-          
-          // 触摸放置辅助
           cup.dataset.r = rIdx; cup.dataset.c = i;
         }
 
@@ -501,7 +501,7 @@
     renderAttempts();
   }
 
-  /* ===== 声音控制 ===== */
+  /* ===== 声音与全局控制 ===== */
   const soundBtn = document.getElementById("soundBtn");
   soundBtn.onclick = () => {
     soundOn = !soundOn;
@@ -516,33 +516,6 @@
     audio.play().catch(()=>{});
   }
 
-  /* ===== 全局触摸逻辑 (Drag & Drop fix for mobile) ===== */
-  document.addEventListener("touchend", e => {
-    if (draggingColorId === null) return;
-    const t = e.changedTouches[0];
-    const el = document.elementFromPoint(t.clientX, t.clientY);
-    const cup = el ? el.closest(".cup") : null;
-    
-    if (cup && cup.dataset.r) {
-      placeColor(parseInt(cup.dataset.r), parseInt(cup.dataset.c), draggingColorId);
-    }
-    draggingColorId = null;
-    // 移除所有高亮
-    document.querySelectorAll(".dropHover").forEach(c => c.classList.remove("dropHover"));
-  });
-
-  document.addEventListener("touchmove", e => {
-    if (draggingColorId === null) return;
-    e.preventDefault(); // 防止滚动
-    const t = e.touches[0];
-    const el = document.elementFromPoint(t.clientX, t.clientY);
-    const cup = el ? el.closest(".cup") : null;
-    
-    document.querySelectorAll(".dropHover").forEach(c => c.classList.remove("dropHover"));
-    if (cup && cup.dataset.r) cup.classList.add("dropHover");
-  }, {passive: false});
-
-  /* ===== 启动 ===== */
   document.getElementById("resetLevel").onclick = () => setupLevel(true);
   document.getElementById("restart").onclick = () => {
     localStorage.removeItem(SAVE_KEY);
@@ -550,11 +523,34 @@
     setupLevel(true);
   };
 
-  // 尝试加载存档，没有则新开
-  if (!loadGame()) {
-    setupLevel(true);
-  } else {
+  /* ===== 移动端触摸修复 ===== */
+  document.addEventListener("touchend", e => {
+    if (draggingColorId === null) return;
+    const t = e.changedTouches[0];
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    const cup = el ? el.closest(".cup") : null;
+    if (cup && cup.dataset.r) {
+      placeColor(parseInt(cup.dataset.r), parseInt(cup.dataset.c), draggingColorId);
+    }
+    draggingColorId = null;
+    document.querySelectorAll(".dropHover").forEach(c => c.classList.remove("dropHover"));
+  });
+
+  document.addEventListener("touchmove", e => {
+    if (draggingColorId === null) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    const cup = el ? el.closest(".cup") : null;
+    document.querySelectorAll(".dropHover").forEach(c => c.classList.remove("dropHover"));
+    if (cup && cup.dataset.r) cup.classList.add("dropHover");
+  }, {passive: false});
+
+  // 启动
+  if (!loadGame()) setupLevel(true);
+  else {
     renderAll();
+    setTimeout(scrollToEnd, 100);
   }
 
 })();
