@@ -195,7 +195,7 @@
       background: rgba(255,255,255,0.9);
       box-shadow: 0 1px 2px rgba(0,0,0,0.1);
       /* 引用图片 */
-      background-image: url('xiaoming.jpg'); 
+      background-image: url('xiaoming.png'); 
       background-size: contain; 
       background-repeat: no-repeat;
       background-position: center;
@@ -226,7 +226,19 @@
     }
 
     .paletteItem { margin-top: 5px; }
-    .used .can { opacity: 0.4; filter: grayscale(0.8); cursor: default; }
+    .used .can{opacity: 0.25;
+               filter: grayscale(1) brightness(0.7);
+               transform: scale(0.88);
+              }
+    .used::after{content:"已取走";
+                 font-size: 10px;
+                 color: rgba(255,255,255,0.55);
+                 display:block;
+                 text-align:center;
+                 margin-top:4px;
+                 letter-spacing:1px;
+                }
+
   </style>
 </head>
 
@@ -414,8 +426,16 @@
       const canDiv = document.createElement("div");
       canDiv.innerHTML = createCanHTML(id);
       const canEl = canDiv.firstElementChild;
-      addDragLogic(canEl, id);
+      if (!usedIds.has(id)) {
+        addDragLogic(canEl, id);
+      } else {
+        // 已被拿走：彻底禁用交互
+        canEl.style.pointerEvents = "none";
+        canEl.style.cursor = "default";
+        canEl.classList.add("taken");
+      }
       wrap.appendChild(canEl);
+
       elPalette.appendChild(wrap);
     });
   }
@@ -476,9 +496,11 @@
       highlightCup(x, y); // 开始时就检测一下
     };
     const moveDrag = (x, y) => {
+      lastDragXY = { x, y };
       moveGhost(x, y);
       highlightCup(x, y);
     };
+    
     const endDrag = (x, y) => {
       dropAt(x, y);
       removeGhost();
@@ -496,10 +518,13 @@
       const t = e.touches[0];
       moveDrag(t.clientX, t.clientY);
     }, {passive: false});
-
+    
     el.addEventListener("touchend", e => {
-      const t = e.changedTouches[0];
-      endDrag(t.clientX, t.clientY);
+      const t = e.changedTouches && e.changedTouches[0];
+      const x = (t && typeof t.clientX === "number") ? t.clientX : (lastDragXY?.x);
+      const y = (t && typeof t.clientY === "number") ? t.clientY : (lastDragXY?.y);
+      if (typeof x === "number" && typeof y === "number") endDrag(x, y);
+      else removeGhost(); // 实在拿不到坐标就只取消拖拽
     });
 
     // Mouse
@@ -507,10 +532,14 @@
       startDrag(e.clientX, e.clientY);
       const onMove = ev => moveDrag(ev.clientX, ev.clientY);
       const onUp = ev => {
-        endDrag(ev.clientX, ev.clientY);
+        const x = (typeof ev.clientX === "number") ? ev.clientX : (lastDragXY?.x);
+        const y = (typeof ev.clientY === "number") ? ev.clientY : (lastDragXY?.y);
+        if (typeof x === "number" && typeof y === "number") endDrag(x, y);
+        else removeGhost();
         window.removeEventListener("mousemove", onMove);
         window.removeEventListener("mouseup", onUp);
       };
+
       window.addEventListener("mousemove", onMove);
       window.addEventListener("mouseup", onUp);
     });
@@ -625,3 +654,4 @@
 </script>
 </body>
 </html>
+
