@@ -13,7 +13,7 @@
   
   <style>
     :root{
-      /* 默认值，JS会根据数量动态覆盖 */
+      /* 默认值，JS会动态覆盖 */
       --slot-h: 60px;
       --slot-gap: 14px;
       --can-w: 38px;
@@ -72,7 +72,7 @@
 
     .wrap{ 
       width: min(1000px, 99vw); 
-      height: 99vh; /* 撑满屏幕高度 */
+      height: 99vh;
       position:relative; 
       z-index:1; 
       display: flex;
@@ -109,7 +109,7 @@
 
     /* 游戏面板 */
     .game-board {
-      flex: 1; /* 自动占满剩余高度 */
+      flex: 1;
       display: grid;
       grid-template-columns: 1fr 90px; 
       gap: 12px;
@@ -132,7 +132,7 @@
       align-items: center; 
       justify-content: flex-end; 
       padding: 0 10px;
-      height: 100%; /* 撑满父容器 */
+      height: 100%;
       
       background-color: rgba(0,0,0,0.05);
       background-image: repeating-linear-gradient(
@@ -172,7 +172,7 @@
       justify-content: center;
       gap: var(--slot-gap);
       overflow-y: auto;
-      height: 100%; /* 撑满高度 */
+      height: 100%;
       box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
     }
 
@@ -184,40 +184,23 @@
       position: relative;
       height: 100%;
     }
-    .rowCard.active { z-index: 2; }
-    .rowCard.active::before {
-      content: ""; position: absolute; inset: -4px -6px; 
-      border: 3px dashed var(--safety-yellow);
-      border-radius: 12px;
-      background: rgba(255, 235, 59, 0.1);
-      z-index: -1;
-      animation: pulseBorder 2s infinite;
-    }
-    @keyframes pulseBorder { 50% { opacity: 0.6; border-color: #fff; } }
+    /* ✅ 删除了 .rowCard.active::before (去除了列发光框) */
 
+    /* ✅ 极简格子：无边框，无背景，无阴影 */
     .cup {
       width: calc(var(--can-w) + 8px);
       height: var(--slot-h);
-      background: rgba(0,0,0,0.15); 
-      border-radius: 4px;
-      position: relative;
-      border: 1px solid rgba(255,255,255,0.15);
-      display: flex; justify-content: center; align-items: center; 
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-      overflow: hidden;
+      background: transparent; /* 完全透明 */
+      border: none;            /* 无边框 */
+      box-shadow: none;        /* 无阴影 */
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      overflow: hidden;        /* 限制爆炸范围 */
     }
-    .cup.dropHover { 
-      background: rgba(255,255,255,0.7); 
-      outline: 2px solid var(--safety-yellow); 
-    }
-    .cup.isCorrect { border: 2px solid #22c55e; background: rgba(34,197,94,0.15); }
-    .cup.isWrong { 
-      border: 2px solid #ffffff; 
-      background: rgba(255,255,255,0.2); 
-      box-shadow: 0 0 8px rgba(255,255,255,0.6);
-    }
-
-    /* 易拉罐 - 金属质感 */
+    /* 去除了 hover 效果，保持静默 */
+    
+    /* 易拉罐 */
     .can {
       width: var(--can-w); height: var(--can-h);
       position: relative; z-index: 10;
@@ -251,7 +234,7 @@
       filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
     }
     
-    /* 💥 SVG 尖锐喷溅容器 (固定版) */
+    /* 💥 SVG 尖锐喷溅容器 */
     .residue {
       position: absolute; inset: 12%; z-index: 5;
       opacity: 1; pointer-events: none; mix-blend-mode: normal; 
@@ -262,12 +245,9 @@
     .residue.static svg { opacity: 1; transform: scale(1.1); }
     @keyframes splashAnim { 0% { transform: scale(0.2); opacity: 0.8; } 100% { transform: scale(1.1); opacity: 1; } }
 
-    /* 拖拽幽灵 - 中心对齐 */
     .drag-ghost {
       position: fixed; pointer-events: none !important; z-index: 9999;
-      /* 关键：translate(-50%, -50%) 确保以鼠标为中心 */
-      transform: translate(-50%, -50%) scale(1.15) rotate(5deg); 
-      opacity: 0.95;
+      transform: translate(-50%, -50%) scale(1.15) rotate(5deg); opacity: 0.95;
       filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4));
     }
     
@@ -331,7 +311,7 @@
     {name:"土豪金", hex:"#ca8a04"}, 
   ];
   
-  const SAVE_KEY = "soda_factory_v32_natural_drag";
+  const SAVE_KEY = "soda_factory_v33_clean_look";
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
@@ -349,65 +329,47 @@
   let dragGhostEl = null;
   let selectedColorId = null;
 
-  /* ===== 📐 分段式布局逻辑 ===== */
+  /* ===== 📐 布局逻辑 ===== */
   function updateLayoutDimensions() {
     const root = document.documentElement;
 
-    // 🔴 模式 1：数量 < 9，保持原版固定大小
+    // 🔴 模式 1：数量 < 9
     if (pairCount < 9) {
-      // 恢复经典的参数
       root.style.setProperty('--slot-h', '60px');
       root.style.setProperty('--slot-gap', '14px');
       root.style.setProperty('--can-h', '52px');
       root.style.setProperty('--can-w', '38px');
-      
-      // 更新背景条纹 (经典计算)
       const totalContentH = pairCount * 60 + (pairCount - 1) * 14;
       document.querySelector('.history-viewport').style.setProperty('--belt-bg-height', `${totalContentH}px`);
       return; 
     }
 
-    // 🔴 模式 2：数量 >= 9，贪婪填充模式
-    // 1. 获取游戏区域的净高度 (排除 padding)
+    // 🔴 模式 2：数量 >= 9 (贪婪填充)
     const boardEl = document.querySelector('.game-board');
     const viewportH = boardEl ? boardEl.clientHeight : window.innerHeight * 0.85;
-    
-    // 扣除一点上下内边距
     const availableH = viewportH - 16; 
-    
-    // 2. 压缩间距 (Gap)，优先把空间留给瓶子
-    let gap = 4; // 9个以上，间距设为极小的 4px
-    
-    // 3. 计算每个 Slot 的最大高度
+    let gap = 4;
     let slotH = (availableH - (gap * (pairCount - 1))) / pairCount;
-    
-    // 限制最大值 (防止某些极端宽屏下变得太大)
     if (slotH > 70) slotH = 70;
     
-    // 4. 计算瓶子(Can)的尺寸
-    // 瓶子高度占格子的 92% (尽可能填满)
     const canH = Math.floor(slotH * 0.92);
-    // 瓶子宽度保持比例 (约 0.65)
     const canW = Math.floor(canH * 0.65); 
     
-    // 5. 应用变量
     root.style.setProperty('--slot-h', `${slotH}px`);
     root.style.setProperty('--slot-gap', `${gap}px`);
     root.style.setProperty('--can-h', `${canH}px`);
     root.style.setProperty('--can-w', `${canW}px`);
     
-    // 6. 更新背景条纹 (精确匹配)
     const totalContentH = pairCount * slotH + (pairCount - 1) * gap;
     document.querySelector('.history-viewport').style.setProperty('--belt-bg-height', `${totalContentH}px`);
   }
 
-  // 监听窗口大小变化
   window.addEventListener('resize', () => {
     clearTimeout(window.resizeTimer);
     window.resizeTimer = setTimeout(updateLayoutDimensions, 100);
   });
 
-  /* ===== 💥 尖锐喷溅 SVG ===== */
+  /* ===== 💥 SVG ===== */
   function getSplashSVG() {
     return `
       <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -462,23 +424,17 @@
     if (isNew) {
       const config = getLevelConfig(level);
       pairCount = config.count;
-      
       const currentPool = COLOR_POOL.slice(0, config.poolSize);
       const poolIndices = currentPool.map((_, i) => i);
-      
       ids = shuffle([...poolIndices]).slice(0, pairCount);
       correctSeq = shuffle([...ids]);
-
       attempts = [{
         guess: Array(pairCount).fill(null), status: "active", residue: Array(pairCount).fill(null)
       }];
       activeRowIndex = 0;
       selectedColorId = null;
     }
-    
-    // 强制刷新布局
     setTimeout(updateLayoutDimensions, 0); 
-    
     saveGame();
     renderAll();
     setTimeout(scrollToEnd, 100);
@@ -504,17 +460,13 @@
 
     if (!allCorrect) {
       row.residue = row.guess.map((id, i) => marks[i] ? null : COLOR_POOL[id].hex);
-      
       row.residueSpecs = row.residue.map(() => ({
         rot: Math.floor(Math.random() * 360),
         scale: 0.9 + Math.random() * 0.3
       }));
-      
       row.failTime = Date.now(); 
-      // ❌ 错误播放 POP
       playSound(sfxPop);
     } else {
-      // ✅ 正确播放 CORRECT
       playSound(sfxCorrect);
     }
     saveGame();
@@ -560,9 +512,7 @@
       canDiv.innerHTML = createCanHTML(id);
       const canEl = canDiv.firstElementChild;
       if (selectedColorId === id) canEl.classList.add("selected");
-      
       addInteraction(canEl, id, false); 
-      
       wrap.appendChild(canEl);
       elPalette.appendChild(wrap);
     });
@@ -581,14 +531,8 @@
         cup.dataset.r = rIdx;
         cup.dataset.c = i;
 
-        if (isLast && selectedColorId !== null && row.guess[i] === null) {
-          cup.style.outline = "2px dashed var(--safety-yellow)";
-          cup.style.background = "rgba(255,255,255,0.5)";
-        } else {
-          cup.style.outline = "";
-          cup.style.background = "";
-        }
-
+        // ✅ 取消了选中时的发光框
+        
         if (isLast) {
           cup.onclick = () => {
             if (selectedColorId !== null) placeColor(rIdx, i, selectedColorId);
@@ -599,19 +543,15 @@
           const s = document.createElement("div");
           s.className = "residue";
           s.style.setProperty("--residue-color", row.residue[i]);
-          
           const spec = (row.residueSpecs && row.residueSpecs[i]) || { rot: 0, scale: 1 };
           s.style.setProperty("--rot", spec.rot + "deg");
           s.style.setProperty("--scale", spec.scale);
-          
           s.innerHTML = getSplashSVG();
-          
           const isFresh = (Date.now() - (row.failTime || 0)) < 800;
           if (isFresh) s.classList.add("anim-pop");
           else s.classList.add("static");
-
           cup.appendChild(s);
-          cup.classList.add("isWrong"); 
+          // ✅ 移除了 isWrong 的 CSS 边框
         }
 
         const cid = row.guess[i];
@@ -622,15 +562,13 @@
             const canWrap = document.createElement("div");
             canWrap.innerHTML = createCanHTML(cid);
             const canEl = canWrap.firstElementChild;
-            
             if (isLast) {
               addInteraction(canEl, cid, true); 
             } else {
               canEl.style.cursor = "default";
             }
-            
             cup.appendChild(canEl);
-            if (isFinished && isCorrect) cup.classList.add("isCorrect");
+            // ✅ 移除了 isCorrect 的 CSS 边框
           }
         }
         card.appendChild(cup);
@@ -701,8 +639,7 @@
   function moveGhost(x, y) { 
     if (dragGhostEl) { 
       dragGhostEl.style.left = x + "px"; 
-      // ✅ 恢复自然拖拽（无偏移）
-      dragGhostEl.style.top = y + "px"; 
+      dragGhostEl.style.top = y + "px"; // ✅ 自然对齐
     } 
   }
   function removeGhost() { if (dragGhostEl) { dragGhostEl.remove(); dragGhostEl = null; } draggingColorId = null; clearHighlight(); }
@@ -732,7 +669,6 @@
   if (!loadGame()) setupLevel(true); 
   else { 
     renderAll(); 
-    // 加载存档后强制刷新一次布局
     setTimeout(updateLayoutDimensions, 0);
     setTimeout(scrollToEnd, 200); 
   }
