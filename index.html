@@ -45,7 +45,7 @@
       color: #fff;
       overflow:hidden;
       background-color: var(--floor-color);
-      /* ✨ 高画质：恢复地板光泽 */
+      /* ✨ 地板纹理 */
       background-image: 
         linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
@@ -91,7 +91,7 @@
       padding-top: 10px;
     }
 
-    /* 💎 高画质玻璃标题栏 */
+    /* 标题栏 */
     .header-bar {
       display: flex; justify-content: space-between; align-items: center;
       padding: 12px 18px;
@@ -119,7 +119,7 @@
     .btn:active { transform:translateY(2px); border-bottom-width:1px; }
     #restart { background: linear-gradient(to bottom, #d32f2f, #9a0007); border-color: #ef5350; }
 
-    /* 💎 高画质磨砂游戏面板 */
+    /* 游戏面板 */
     .game-board {
       flex: 1;
       display: grid;
@@ -173,7 +173,7 @@
     .history-viewport::-webkit-scrollbar { height: 6px; }
     .history-viewport::-webkit-scrollbar-thumb { background: #666; border-radius: 3px; }
 
-    /* === 右侧货架 === */
+    /* 右侧货架 */
     .shelf-column {
       background: linear-gradient(135deg, #d1d5db, #9ca3af);
       border: 2px solid #4b5563;
@@ -224,16 +224,14 @@
       outline: 2px solid var(--safety-yellow); 
       box-shadow: 0 0 15px var(--safety-yellow);
     }
-    /* ✅ 正确：绿框 */
     .cup.isCorrect { border: 2px solid #22c55e; background: rgba(34,197,94,0.15); }
-    /* ⚪ 错误：白框 (按要求) */
     .cup.isWrong { 
       border: 2px solid #ffffff; 
       background: rgba(255,255,255,0.2); 
       box-shadow: 0 0 8px rgba(255,255,255,0.6);
     }
 
-    /* 💎 易拉罐 */
+    /* 易拉罐 */
     .can {
       width: var(--can-w); height: var(--can-h);
       position: relative; z-index: 10;
@@ -258,32 +256,50 @@
       background: #e5e7eb; border: 1px solid #9ca3af; border-radius: 2px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
+    
+    /* 🏷️ Logo 调整：缩小尺寸 */
     .can-label {
       position: absolute; top: 20%; bottom: 20%; left: 0; right: 0;
       background: rgba(255,255,255,0.9); z-index: 2;
       background-image: url('xiaoming.png'); 
-      background-size: contain; background-repeat: no-repeat; background-position: center;
+      /* ✅ 修改：使用 70% 尺寸，不占满整个白色区域，更精致 */
+      background-size: 70%; 
+      background-repeat: no-repeat; 
+      background-position: center;
       box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     
-    /* 💥 纯代码爆炸效果 (CSS Shape) */
+    /* 🫧 气泡破裂特效 (Bubble Burst) */
     .residue {
       position: absolute;
-      inset: -10px; /* 稍微大一点，产生爆炸张力 */
-      background-color: var(--residue-color);
+      /* 初始位置稍微居中 */
+      left: 50%; top: 50%;
+      width: 10px; height: 10px;
+      transform: translate(-50%, -50%);
+      
+      border-radius: 50%;
+      background: transparent;
+      
+      /* 核心：用 border 模拟气泡的线条，颜色动态传入 */
+      border: 3px solid var(--residue-color);
+      box-shadow: 0 0 6px var(--residue-color); /* 增加一点发光 */
+      
+      opacity: 0;
       z-index: 5;
-      /* 核心：用 clip-path 裁切出爆炸形状，由 JS 动态生成多边形 */
-      clip-path: var(--blast-shape); 
-      opacity: 0.9;
-      transform: scale(1);
-      /* 动画：瞬间膨胀 */
-      animation: blastAnim 0.3s cubic-bezier(0.1, 0.9, 0.2, 1.2) forwards;
-      /* 增加一点滤镜让它看起来更像液体/烟雾 */
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+      animation: bubblePop 0.4s ease-out forwards;
     }
-    @keyframes blastAnim {
-      0% { transform: scale(0) rotate(0deg); opacity: 0.5; }
-      100% { transform: scale(1) rotate(var(--blast-rotate)); opacity: 0.9; }
+
+    @keyframes bubblePop {
+      0% {
+        width: 10px; height: 10px;
+        opacity: 1;
+        border-width: 6px; /* 开始时线条较粗 */
+      }
+      100% {
+        width: 60px; height: 60px; /* 扩散变大 */
+        opacity: 0;
+        border-width: 0px; /* 结束时线条消失 */
+      }
     }
 
     .drag-ghost {
@@ -352,7 +368,7 @@
     {name:"土豪金", hex:"#ca8a04"}, 
   ];
   
-  const SAVE_KEY = "soda_factory_v18_final_code_blast";
+  const SAVE_KEY = "soda_factory_v19_bubble";
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
@@ -369,22 +385,6 @@
   let draggingColorId = null;
   let dragGhostEl = null;
   let selectedColorId = null;
-
-  /* ===== 💥 核心：用代码生成随机爆炸形状 (SVG Path / Polygon) ===== */
-  function generateBlastPolygon() {
-    const points = [];
-    const steps = 16; // 爆炸刺的数量
-    for (let i = 0; i < steps; i++) {
-      const angle = (i / steps) * 2 * Math.PI;
-      // 随机半径，产生锯齿感
-      const r = (i % 2 === 0) ? (0.3 + Math.random() * 0.2) : (0.8 + Math.random() * 0.2); 
-      // 转换极坐标到百分比 (50% 50% 是中心)
-      const x = 50 + Math.cos(angle) * r * 50;
-      const y = 50 + Math.sin(angle) * r * 50;
-      points.push(`${x.toFixed(1)}% ${y.toFixed(1)}%`);
-    }
-    return `polygon(${points.join(',')})`;
-  }
 
   function updateLayoutMode() {
     const board = document.getElementById('board');
@@ -543,7 +543,6 @@
         cup.dataset.r = rIdx;
         cup.dataset.c = i;
 
-        // 仅当前行允许交互
         if (isLast && selectedColorId !== null && row.guess[i] === null) {
           cup.style.outline = "2px dashed var(--safety-yellow)";
           cup.style.background = "rgba(255,255,255,0.5)";
@@ -558,32 +557,25 @@
           };
         }
 
-        // 💥 渲染爆炸
+        // 渲染气泡破裂特效
         if (row.residue && row.residue[i]) {
           const s = document.createElement("div");
           s.className = "residue";
           s.style.setProperty("--residue-color", row.residue[i]);
-          
-          // 动态生成一个随机的爆炸形状
-          s.style.setProperty("--blast-shape", generateBlastPolygon());
-          // 随机旋转一点点
-          s.style.setProperty("--blast-rotate", (Math.random() * 60 - 30) + "deg");
-          
           cup.appendChild(s);
-          cup.classList.add("isWrong"); // 白框
+          cup.classList.add("isWrong"); 
         }
 
         const cid = row.guess[i];
         if (cid !== null) {
           const isCorrect = row.marks && row.marks[i];
           const isFinished = row.status !== "active";
-          // 逻辑：正确保留，未结束保留。错误则不显示（被炸没了）
+          // 逻辑：正确保留，未结束保留。错误则不显示
           if (!isFinished || isCorrect) {
             const canWrap = document.createElement("div");
             canWrap.innerHTML = createCanHTML(cid);
             const canEl = canWrap.firstElementChild;
             
-            // 🔒 只有当前行的瓶子可操作
             if (isLast) {
               addInteraction(canEl, cid, true); 
             } else {
