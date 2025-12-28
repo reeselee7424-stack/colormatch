@@ -45,66 +45,6 @@
       touch-action: none;
     }
 
-    /* 🏭 顶部工人流水线区域 */
-    .worker-belt-container {
-      height: 80px;
-      background: linear-gradient(to bottom, #707070, #909090);
-      border-bottom: 4px solid var(--industrial-grey);
-      display: flex;
-      align-items: center;
-      overflow: hidden;
-      position: relative;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    }
-    
-    .worker-belt {
-      display: flex;
-      gap: 40px;
-      padding: 0 20px;
-      animation: moveWorkers 20s linear infinite;
-    }
-
-    /* 小工人头带帽子 */
-    .worker {
-      width: 40px;
-      height: 40px;
-      position: relative;
-    }
-    .worker-head {
-      width: 30px;
-      height: 30px;
-      background: #f0c0a0; /* 肤色 */
-      border-radius: 50%;
-      position: absolute;
-      bottom: 0;
-      left: 5px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    .worker-hat {
-      width: 40px;
-      height: 20px;
-      background: #306090; /* 蓝色帽子 */
-      border-radius: 20px 20px 0 0;
-      position: absolute;
-      top: -5px;
-      left: 0;
-    }
-    .worker-hat::after {
-      content: '';
-      position: absolute;
-      width: 50px;
-      height: 5px;
-      background: #306090;
-      bottom: -5px;
-      left: -5px;
-      border-radius: 2px;
-    }
-
-    @keyframes moveWorkers {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-600px); } /* 根据工人数量调整 */
-    }
-
     .wrap{ 
       width: min(1000px, 98vw); 
       height: 96vh;
@@ -112,22 +52,51 @@
       z-index:1; 
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      background: rgba(255, 255, 255, 0.8); /* 半透明背景，透出地板 */
-      border-radius: 12px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-      overflow: hidden; /* 裁剪顶部圆角 */
+      gap: 16px; /* 增加一点间距 */
+      /* 移除 wrap 的背景，让玻璃窗透出 body 背景 */
+      background: transparent; 
+      box-shadow: none;
+      overflow: visible;
+      padding-top: 10px;
     }
 
-    /* 标题栏 */
+    /* ===== 🪟 新版玻璃标题栏 (原蓝色区域) ===== */
     .header-bar {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 15px;
-      background: var(--industrial-grey);
+      padding: 12px 18px;
+      
+      /* 玻璃质感核心样式 */
+      background: rgba(40, 44, 52, 0.75); /* 深色半透明基底 */
+      backdrop-filter: blur(12px); /* 磨砂模糊效果 */
+      border: 2px solid rgba(255, 255, 255, 0.15); /* 玻璃边缘光泽 */
+      border-radius: 16px; /* 圆角 */
+      box-shadow: 
+        0 8px 32px 0 rgba(0, 0, 0, 0.3), /* 深邃阴影 */
+        inset 0 1px 1px rgba(255,255,255,0.2); /* 顶部高光 */
+      
       color: #fff;
     }
-    h1 { margin:0; font-size: 20px; font-weight: bold; text-shadow: 1px 1px 2px black; }
-    .meta { display:flex; gap:10px; font-size:14px; font-weight:600; color:#d0d0d0; }
+    
+    /* 🧢 戴帽子的小明 (CSS绘制) */
+    .xiaoming-char {
+      width: 36px; height: 36px; position: relative; flex-shrink: 0;
+    }
+    .char-head {
+      width: 28px; height: 28px; background: #f0c0a0; border-radius: 50%;
+      position: absolute; bottom: 0; left: 4px; border: 2px solid #fff;
+    }
+    .char-hat {
+      width: 36px; height: 18px; background: #306090; border-radius: 18px 18px 0 0;
+      position: absolute; top: -2px; left: 0; border: 2px solid #fff; border-bottom: none;
+    }
+    .char-hat::after { /* 帽檐 */
+      content: ''; position: absolute; width: 44px; height: 4px;
+      background: #306090; bottom: -4px; left: -6px; border-radius: 2px;
+      border: 2px solid #fff;
+    }
+
+    h1 { margin:0; font-size: 20px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    .meta { display:flex; gap:10px; font-size:14px; font-weight:600; color:#e0e0e0; }
     
     .btn {
       background: linear-gradient(to bottom, #808080, #606060); color: #fff;
@@ -145,7 +114,9 @@
       grid-template-columns: 1fr 110px; 
       gap: 16px;
       overflow: hidden; 
-      background: transparent;
+      background: rgba(255, 255, 255, 0.8); /* 主区域保持半透明背景 */
+      border-radius: 12px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
       padding: 12px;
     }
 
@@ -312,26 +283,22 @@
 
   <div class="wrap">
     
-    <div class="worker-belt-container">
-      <div class="worker-belt">
-        <div class="worker"><div class="worker-hat"></div><div class="worker-head"></div></div>
-        <div class="worker"><div class="worker-hat"></div><div class="worker-head"></div></div>
-        <div class="worker"><div class="worker-hat"></div><div class="worker-head"></div></div>
-        <div class="worker"><div class="worker-hat"></div><div class="worker-head"></div></div>
-        <div class="worker"><div class="worker-hat"></div><div class="worker-head"></div></div>
-        <div class="worker"><div class="worker-hat"></div><div class="worker-head"></div></div>
-        <div class="worker"><div class="worker-hat"></div><div class="worker-head"></div></div>
-        <div class="worker"><div class="worker-hat"></div><div class="worker-head"></div></div>
-      </div>
-    </div>
-
     <div class="header-bar">
-      <h1>🏭 小明汽水流水线</h1>
-      <div class="meta">
-        <span>批次: <b id="level">1</b></span>
-        <button class="btn" id="soundBtn">🔇</button>
+      <div style="display:flex; align-items:center; gap: 12px;">
+        <div class="xiaoming-char">
+          <div class="char-hat"></div>
+          <div class="char-head"></div>
+        </div>
+        <div>
+          <h1>🏭 小明汽水流水线</h1>
+          <div class="meta">
+            <span>批次: <b id="level">1</b></span>
+            <button class="btn" id="soundBtn" style="padding: 2px 6px; margin-left: 5px;">🔇</button>
+          </div>
+        </div>
       </div>
-      <div>
+      
+      <div style="display:flex; gap:8px;">
         <button class="btn" id="resetLevel">重置</button>
         <button class="btn" id="restart">重开</button>
       </div>
@@ -351,7 +318,7 @@
     {name:"青苹果", hex:"#22c55e"}, {name:"海盐", hex:"#06b6d4"}, {name:"深海", hex:"#3b82f6"}, 
     {name:"葡萄", hex:"#a855f7"}, {name:"桃子", hex:"#ec4899"}, {name:"拿铁", hex:"#8d6e63"}, 
   ];
-  const SAVE_KEY = "xiaoming_factory_v10_industrial";
+  const SAVE_KEY = "xiaoming_factory_v11_glass";
   
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
@@ -513,7 +480,7 @@
 
         if (isLast && selectedColorId !== null && row.guess[i] === null) {
           cup.style.outline = "2px dashed var(--safety-yellow)";
-          cup.style.background = "rgba(255,255,255,0.8)";
+          cup.style.background = "rgba(255,255,255,0.5)";
         } else {
           cup.style.outline = "";
           cup.style.background = "";
