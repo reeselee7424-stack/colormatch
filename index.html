@@ -257,49 +257,41 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
     
-    /* 🏷️ Logo 调整：缩小尺寸 */
+    /* 🏷️ Logo：透明背景 + 70% 尺寸 */
     .can-label {
       position: absolute; top: 20%; bottom: 20%; left: 0; right: 0;
-      background: rgba(255,255,255,0.9); z-index: 2;
+      /* 背景透明，不再有白色方块 */
+      background: transparent; 
+      z-index: 2;
       background-image: url('xiaoming.png'); 
-      /* ✅ 修改：使用 70% 尺寸，不占满整个白色区域，更精致 */
       background-size: 70%; 
       background-repeat: no-repeat; 
       background-position: center;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      /* 给 Logo 加一点投影让它浮起来 */
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
     }
     
-    /* 🫧 气泡破裂特效 (Bubble Burst) */
+    /* ⚫ Ink Blot (墨渍/泼溅) 特效 */
     .residue {
       position: absolute;
-      /* 初始位置稍微居中 */
-      left: 50%; top: 50%;
-      width: 10px; height: 10px;
-      transform: translate(-50%, -50%);
-      
-      border-radius: 50%;
-      background: transparent;
-      
-      /* 核心：用 border 模拟气泡的线条，颜色动态传入 */
-      border: 3px solid var(--residue-color);
-      box-shadow: 0 0 6px var(--residue-color); /* 增加一点发光 */
-      
-      opacity: 0;
+      inset: -20px; /* 让墨渍大一点 */
+      background-color: var(--residue-color);
       z-index: 5;
-      animation: bubblePop 0.4s ease-out forwards;
+      
+      /* 由 JS 动态生成的墨渍形状 */
+      clip-path: var(--ink-shape);
+      
+      /* 混合模式：让墨水看起来渗入背景 */
+      mix-blend-mode: multiply;
+      
+      opacity: 0.9;
+      transform: scale(1);
+      animation: inkSplat 0.2s cubic-bezier(0.1, 0.8, 0.2, 1.5) forwards;
     }
-
-    @keyframes bubblePop {
-      0% {
-        width: 10px; height: 10px;
-        opacity: 1;
-        border-width: 6px; /* 开始时线条较粗 */
-      }
-      100% {
-        width: 60px; height: 60px; /* 扩散变大 */
-        opacity: 0;
-        border-width: 0px; /* 结束时线条消失 */
-      }
+    
+    @keyframes inkSplat {
+      0% { transform: scale(0.2) rotate(0deg); opacity: 0.8; }
+      100% { transform: scale(1) rotate(var(--ink-rotate)); opacity: 0.9; }
     }
 
     .drag-ghost {
@@ -368,7 +360,7 @@
     {name:"土豪金", hex:"#ca8a04"}, 
   ];
   
-  const SAVE_KEY = "soda_factory_v19_bubble";
+  const SAVE_KEY = "soda_factory_v20_inkblot";
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
@@ -385,6 +377,22 @@
   let draggingColorId = null;
   let dragGhostEl = null;
   let selectedColorId = null;
+
+  /* ===== 💥 生成随机墨渍形状 (Ink Blot Shape) ===== */
+  function generateInkBlot() {
+    const points = [];
+    const steps = 30; // 更多点数，形状更复杂
+    for (let i = 0; i < steps; i++) {
+      const angle = (i / steps) * 2 * Math.PI;
+      // 随机半径波动范围大 (30% - 100%)，模拟液体的流动感
+      const r = 30 + Math.random() * 70; 
+      // 转换到 50% 50% 为中心
+      const x = 50 + Math.cos(angle) * r / 2; 
+      const y = 50 + Math.sin(angle) * r / 2;
+      points.push(`${x.toFixed(1)}% ${y.toFixed(1)}%`);
+    }
+    return `polygon(${points.join(',')})`;
+  }
 
   function updateLayoutMode() {
     const board = document.getElementById('board');
@@ -557,20 +565,25 @@
           };
         }
 
-        // 渲染气泡破裂特效
+        // 💥 渲染 Ink Blot
         if (row.residue && row.residue[i]) {
           const s = document.createElement("div");
           s.className = "residue";
           s.style.setProperty("--residue-color", row.residue[i]);
+          
+          // 动态生成墨渍形状
+          s.style.setProperty("--ink-shape", generateInkBlot());
+          // 随机旋转
+          s.style.setProperty("--ink-rotate", (Math.random() * 360) + "deg");
+          
           cup.appendChild(s);
-          cup.classList.add("isWrong"); 
+          cup.classList.add("isWrong"); // 白框
         }
 
         const cid = row.guess[i];
         if (cid !== null) {
           const isCorrect = row.marks && row.marks[i];
           const isFinished = row.status !== "active";
-          // 逻辑：正确保留，未结束保留。错误则不显示
           if (!isFinished || isCorrect) {
             const canWrap = document.createElement("div");
             canWrap.innerHTML = createCanHTML(cid);
