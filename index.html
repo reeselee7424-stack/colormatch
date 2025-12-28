@@ -488,7 +488,7 @@
     renderAll();
     if (row.guess.every(v => v !== null)) checkRow(row);
   }
-
+  
   function checkRow(row) {
     const marks = row.guess.map((id, i) => id === correctSeq[i]);
     const allCorrect = marks.every(Boolean);
@@ -496,6 +496,7 @@
     row.status = allCorrect ? "ok" : "bad";
 
     if (!allCorrect) {
+      // ❌ 失败/错误的情况
       row.residue = row.guess.map((id, i) => marks[i] ? null : COLOR_POOL[id].hex);
       
       row.residueSpecs = row.residue.map(() => ({
@@ -504,10 +505,22 @@
       }));
       
       row.failTime = Date.now(); 
-      playSound(sfxPop);
+      
+      // ⏰ 延迟 100ms 播放，配合视觉爆炸
+      setTimeout(() => {
+        // 如果这里应该是“爆炸/错误”的声音，请确认这里调用的是对的变量
+        // 如果你觉得反了，把 sfxCorrect 和下面的 sfxPop 换个位置
+        playSound(pop.mp3); 
+      }, 100);
+
     } else {
-      playSound(sfxCorrect);
+      // ✅ 成功/正确的情况
+      setTimeout(() => {
+        // 如果这里应该是“通关/正确”的声音
+        playSound(correct.mp3); 
+      }, 100);
     }
+    
     saveGame();
     renderAll();
     
@@ -730,3 +743,4 @@
 </script>
 </body>
 </html>
+
