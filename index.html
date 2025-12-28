@@ -212,13 +212,14 @@
     .cup {
       width: 44px;
       height: var(--slot-h);
+      /* ✅ 1. 这里的背景色是“框内原来的颜色” */
       background: rgba(0,0,0,0.15); 
       border-radius: 6px;
       position: relative;
       border: 1px solid rgba(255,255,255,0.15);
       display: flex; justify-content: center; align-items: center; 
       box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-      /* ✅ 核心修改：限制内容在框内 */
+      /* ✅ 限制爆炸在框内 */
       overflow: hidden;
     }
     .cup.dropHover { 
@@ -259,7 +260,7 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
     
-    /* 🏷️ Logo */
+    /* 🏷️ Logo：透明背景 */
     .can-label {
       position: absolute; top: 20%; bottom: 20%; left: 0; right: 0;
       background: transparent; 
@@ -271,41 +272,42 @@
       filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
     }
     
-    /* ☁️ 圆润气泡爆炸特效 (CSS Bubbly Cloud) */
+    /* 🫧 气泡破裂特效 (Bubble Burst) */
+    /* ✅ 2. 墨渍效果：通过 z-index: 5 叠加在背景之上，不覆盖背景 */
     .residue {
       position: absolute;
-      /* 让它稍微超出一点点，填满格子 */
-      inset: -10%; 
-      z-index: 5;
-      /* 主体颜色 */
+      left: 50%; top: 50%;
+      width: 10px; height: 10px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
       background: var(--residue-color);
-      /* 圆角主体 */
-      border-radius: 50%; 
-      opacity: 1;
-      /* 动画：瞬间膨胀 */
+      opacity: 0.9;
+      z-index: 5;
+      /* 混合模式：让墨水颜色与底色融合，显得更自然 */
+      mix-blend-mode: multiply;
       animation: puffExpand 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
 
-    /* 利用伪元素和投影制造更多圆形气泡 */
+    /* 制造不规则的气泡云形状 */
     .residue::before,
     .residue::after {
       content: ''; position: absolute;
-      background: inherit; /* 继承主体颜色 */
+      background: inherit;
       border-radius: 50%;
     }
     .residue::before {
-      width: 80%; height: 80%; top: -10%; left: -20%;
-      box-shadow: 40px 10px 0 var(--residue-color), 
-                  30px 40px 0 var(--residue-color);
+      width: 70%; height: 70%; top: -15%; left: -25%;
+      box-shadow: 20px 5px 0 var(--residue-color);
     }
     .residue::after {
-      width: 70%; height: 70%; bottom: -10%; right: -15%;
-      box-shadow: -30px -20px 0 var(--residue-color);
+      width: 60%; height: 60%; bottom: -15%; right: -20%;
+      box-shadow: -15px -10px 0 var(--residue-color);
     }
 
+    /* 动画：稍微收敛一点，不要填满整个盒子，这样才能露出盒子的底色 */
     @keyframes puffExpand {
-      0% { transform: scale(0.3); opacity: 0.6; }
-      100% { transform: scale(1.1); opacity: 1; }
+      0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0.6; }
+      100% { transform: translate(-50%, -50%) scale(1.4); opacity: 0.85; }
     }
 
     .drag-ghost {
@@ -374,7 +376,7 @@
     {name:"土豪金", hex:"#ca8a04"}, 
   ];
   
-  const SAVE_KEY = "soda_factory_v21_round_blast";
+  const SAVE_KEY = "soda_factory_v22_fix_random";
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
@@ -425,7 +427,20 @@
     } catch(e) { return false; }
   }
 
-  const shuffle = arr => arr.sort(() => Math.random() - 0.5);
+  /* ✅ Fisher-Yates 洗牌算法：保证绝对随机 */
+  function shuffle(array) {
+    let currentIndex = array.length, randomIndex;
+    // 当还剩有元素未洗牌时...
+    while (currentIndex != 0) {
+      // 选取一个剩余元素...
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+      // 并与当前元素交换
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex], array[currentIndex]];
+    }
+    return array;
+  }
 
   function getLevelConfig(lvl) {
     if (lvl <= 21) {
@@ -444,7 +459,11 @@
       const currentPool = COLOR_POOL.slice(0, config.poolSize);
       const poolIndices = currentPool.map((_, i) => i);
       
-      ids = shuffle(poolIndices).slice(0, pairCount);
+      // 1. 随机选出本关的配色 (IDs)
+      ids = shuffle([...poolIndices]).slice(0, pairCount);
+      
+      // 2. ✅ 使用 Fisher-Yates 再次完全打乱作为正确答案
+      // 必须使用 [...ids] 复制一份，否则会打乱原来的 ids (货架顺序)
       correctSeq = shuffle([...ids]);
 
       attempts = [{
@@ -563,7 +582,7 @@
           };
         }
 
-        // ☁️ 渲染圆润气泡爆炸
+        // 渲染气泡破裂特效
         if (row.residue && row.residue[i]) {
           const s = document.createElement("div");
           s.className = "residue";
