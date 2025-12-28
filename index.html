@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
-  <title>汽水流水线</title>
+  <title>小明汽水流水线</title>
 
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#f0f9ff">
@@ -13,18 +13,27 @@
   
   <style>
     :root{
-      /* 核心尺寸 */
+      /* 默认尺寸 (Standard Mode) */
       --slot-h: 60px;
       --slot-gap: 14px;
+      --can-w: 38px;
+      --can-h: 50px;
       
-      /* 🏭 流水线配色增强 */
-      --belt-dark: #888;   /* 深色槽 */
-      --belt-light: #bbb;  /* 浅色脊 */
-      --belt-border: #666; /* 边缘 */
-      
+      /* 流水线配色 */
+      --belt-dark: #888;
+      --belt-light: #bbb;
+      --belt-border: #666;
       --floor-color: #c0c0c0;
       --industrial-grey: #4a4a4a;
       --safety-yellow: #e6b800;
+    }
+
+    /* ⚡️ 密集模式 (Dense Mode)：当瓶子数量>8时启用，防止溢出屏幕 */
+    .mode-dense {
+      --slot-h: 34px !important;
+      --slot-gap: 6px !important;
+      --can-w: 24px !important;
+      --can-h: 30px !important;
     }
 
     body{
@@ -37,7 +46,6 @@
       color: #fff;
       overflow:hidden;
       background-color: var(--floor-color);
-      /* 地板纹理 */
       background-image: 
         linear-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
@@ -47,31 +55,25 @@
       touch-action: none;
     }
 
-    /* 🪟 背景：工厂顶部窗户 */
+    /* 🏭 背景窗户 */
     .factory-windows {
       position: fixed; top: 0; left: 0; right: 0; height: 18vh;
       background: linear-gradient(to bottom, #2c3e50, #4a5c6e);
       z-index: 0;
-      display: flex;
-      justify-content: space-evenly;
-      align-items: center;
+      display: flex; justify-content: space-evenly; align-items: center;
       padding: 0 20px;
       box-shadow: 0 10px 20px rgba(0,0,0,0.3);
       border-bottom: 6px solid #34495e;
     }
-    /* 单个窗户格 */
     .window-pane {
       width: 12%; height: 60%;
       background: linear-gradient(135deg, #aaddff 0%, #ffffff 50%, #88ccff 100%);
       border: 4px solid #1a252f;
-      box-shadow: 
-        inset 0 0 20px rgba(255,255,255,0.8), 
-        0 0 15px rgba(173, 216, 230, 0.6);
+      box-shadow: inset 0 0 20px rgba(255,255,255,0.8), 0 0 15px rgba(173, 216, 230, 0.6);
       position: relative;
     }
-    /* 窗户光束效果 */
     .window-pane::after {
-      content: ""; position: absolute; top:0; left:0; right:0; bottom:0;
+      content: ""; position: absolute; inset: 0;
       background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.4) 45%, transparent 50%);
     }
 
@@ -87,7 +89,7 @@
       padding-top: 10px;
     }
 
-    /* ===== 标题栏 (玻璃质感) ===== */
+    /* 标题栏 */
     .header-bar {
       display: flex; justify-content: space-between; align-items: center;
       padding: 12px 18px;
@@ -98,26 +100,22 @@
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
       margin-top: 10px;
     }
-    
     h1 { margin:0; font-size: 18px; font-weight: bold; letter-spacing: 1px; }
     .meta { display:flex; gap:12px; font-size:13px; color:#ddd; }
-    
     .btn {
       background: linear-gradient(to bottom, #666, #444); color: #fff;
       border: 1px solid #777; border-bottom: 2px solid #222;
       padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;
     }
     .btn:active { transform:translateY(1px); border-bottom-width:1px; }
-    #restart { background: linear-gradient(to bottom, #d32f2f, #b71c1c); border-color: #f44336; }
 
-    /* ===== 🏭 游戏主区域 ===== */
+    /* 游戏区域 */
     .game-board {
       flex: 1;
       display: grid;
-      grid-template-columns: 1fr 100px; 
-      gap: 16px;
+      grid-template-columns: 1fr 90px; 
+      gap: 12px;
       overflow: hidden; 
-      /* 半透明面板，透出地板 */
       background: rgba(255, 255, 255, 0.7); 
       border-radius: 12px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.15);
@@ -125,41 +123,36 @@
       backdrop-filter: blur(5px);
     }
 
-    /* === 左侧：流水线区域 === */
+    /* 左侧流水线 */
     .history-viewport {
       display: flex;
       flex-direction: row;
-      gap: 24px;
+      gap: 20px;
       overflow-x: auto;
       overflow-y: hidden;
       align-items: center; 
       justify-content: flex-end; 
       padding: 0 20px;
       
-      /* 🛣️ 核心：增强版流水线纹理 */
       background-color: rgba(0,0,0,0.05);
-      /* 这里用多重渐变模拟履带的立体感
-         深色条纹 + 浅色高光 + 阴影
-      */
+      /* 动态流水线背景 */
       background-image: repeating-linear-gradient(
         to bottom,
         var(--belt-border) 0px, 
-        var(--belt-border) 1px,         /* 上边缘 */
+        var(--belt-border) 1px,
         var(--belt-light) 1px, 
-        var(--belt-light) 4px,          /* 金属高光脊 */
+        var(--belt-light) 4px,
         var(--belt-dark) 4px,
-        var(--belt-dark) var(--slot-h), /* 履带主体 */
+        var(--belt-dark) var(--slot-h),
         var(--belt-border) var(--slot-h),
-        var(--belt-border) calc(var(--slot-h) + 1px), /* 下边缘 */
+        var(--belt-border) calc(var(--slot-h) + 1px),
         transparent calc(var(--slot-h) + 1px), 
-        transparent calc(var(--slot-h) + var(--slot-gap)) /* 间隙 */
+        transparent calc(var(--slot-h) + var(--slot-gap))
       );
       
       background-position: left center;
       background-repeat: no-repeat;
-      background-size: 200% var(--belt-bg-height, 300px); 
-      
-      /* 轨道整体边框 */
+      background-size: 200% var(--belt-bg-height, 100%); 
       border-top: 4px solid #555;
       border-bottom: 4px solid #555;
       border-radius: 4px;
@@ -168,7 +161,7 @@
     .history-viewport::-webkit-scrollbar { height: 6px; }
     .history-viewport::-webkit-scrollbar-thumb { background: #666; border-radius: 3px; }
 
-    /* === 右侧：货架 === */
+    /* 右侧货架 */
     .shelf-column {
       background: linear-gradient(135deg, #ddd, #bbb);
       border: 2px solid #666;
@@ -177,25 +170,21 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       overflow-y: auto;
       box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
     }
 
-    /* ===== 列容器 ===== */
     .rowCard {
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
       gap: var(--slot-gap);
-      min-width: 60px;
+      min-width: 50px;
       justify-content: center;
       position: relative;
     }
-    
-    /* 激活列高亮 */
     .rowCard.active { z-index: 2; }
     .rowCard.active::before {
-      content: ""; position: absolute; inset: -6px -6px; 
+      content: ""; position: absolute; inset: -4px -6px; 
       border: 2px dashed var(--safety-yellow);
       border-radius: 8px;
       background: rgba(255, 215, 0, 0.05);
@@ -204,45 +193,29 @@
     }
     @keyframes pulseBorder { 50% { opacity: 0.5; } }
 
-    /* ===== 格子 (Slot) ===== */
+    /* 格子 */
     .cup {
-      width: 50px; 
+      width: 44px; /* 稍微窄一点适应密集模式 */
       height: var(--slot-h);
-      /* 默认半透明占位符 */
       background: rgba(0,0,0,0.15); 
       border-radius: 6px;
       position: relative;
       border: 1px solid rgba(255,255,255,0.1);
-      display: flex;
-      justify-content: center;
-      align-items: center; 
+      display: flex; justify-content: center; align-items: center; 
     }
-    .cup.dropHover { 
-      background: rgba(255,255,255,0.6); 
-      outline: 2px solid var(--safety-yellow); 
-    }
-    
-    /* ✅ 正确：绿框 */
-    .cup.isCorrect { 
-      border: 2px solid #22c55e; 
-      background: rgba(34,197,94,0.1); 
-    }
-    
-    /* ⚪ 错误：白框 (根据需求) */
-    .cup.isWrong { 
-      border: 2px solid #ffffff; 
-      background: rgba(255,255,255,0.2); 
-      box-shadow: 0 0 5px rgba(255,255,255,0.5);
-    }
+    .cup.dropHover { background: rgba(255,255,255,0.6); outline: 2px solid var(--safety-yellow); }
+    .cup.isCorrect { border: 2px solid #22c55e; background: rgba(34,197,94,0.1); }
+    /* ⚪ 错误变白框 */
+    .cup.isWrong { border: 2px solid #ffffff; background: rgba(255,255,255,0.2); }
 
-    /* ===== 易拉罐 ===== */
+    /* 易拉罐 */
     .can {
-      width: 38px; height: 50px;
+      width: var(--can-w); height: var(--can-h);
       position: relative; z-index: 10;
       background-color: var(--can-color);
       background-image: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.6) 40%, rgba(0,0,0,0.1) 100%);
-      border-radius: 6px 6px 8px 8px;
-      box-shadow: 0 3px 5px rgba(0,0,0,0.3);
+      border-radius: 4px 4px 6px 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
       cursor: pointer;
       transition: transform 0.1s;
     }
@@ -251,38 +224,35 @@
       transform: scale(1.1); z-index: 20;
     }
     .can::before {
-      content: ""; position: absolute; top: -3px; left: 3px; right: 3px; height: 4px;
+      content: ""; position: absolute; top: -2px; left: 2px; right: 2px; height: 3px;
       background: #ccc; border: 1px solid #999; border-radius: 2px;
     }
     .can-label {
-      position: absolute; top: 12px; bottom: 10px; left: 0; right: 0;
+      position: absolute; top: 20%; bottom: 20%; left: 0; right: 0;
       background: #fff; z-index: 2;
-      /* 这里还是保留图片引用，如果不想用图了可以去掉 */
+      /* ✅ 使用 png 格式 */
       background-image: url('xiaoming.png'); 
       background-size: contain; background-repeat: no-repeat; background-position: center;
     }
     
-    /* 👻 错误残留：糊色 (Paste Color) */
-    /* 不再闪烁，静态的模糊色块 */
+    /* 糊色残留：不闪烁，静态模糊 */
     .residue {
       position: absolute; inset: 2px;
       background: var(--residue-color);
-      border-radius: 50%; /* 圆形色块 */
-      filter: blur(4px);  /* 模糊效果 */
-      opacity: 0.8;
+      border-radius: 50%;
+      filter: blur(5px);
+      opacity: 0.9;
       z-index: 5;
-      /* 移除 animation: splash，防止闪烁 */
       transform: scale(0.8); 
     }
 
-    /* 拖拽幽灵 */
     .drag-ghost {
       position: fixed; pointer-events: none !important; z-index: 9999;
       transform: translate(-50%, -50%) scale(1.1); opacity: 0.9;
     }
-
-    .paletteItem { margin-top: 8px; }
+    .paletteItem { margin-top: 6px; }
     .used .can { opacity: 0.3; filter: grayscale(1); cursor: default; }
+
   </style>
 </head>
 
@@ -313,7 +283,7 @@
       </div>
     </div>
 
-    <div class="game-board">
+    <div class="game-board" id="board">
       <div class="history-viewport" id="attempts"></div>
       <div class="shelf-column" id="palette"></div>
     </div>
@@ -321,16 +291,31 @@
 
 <script>
 (() => {
+  /* ===== 🎨 颜色池：高对比度优化 + 5个新工业色 ===== */
   const COLOR_POOL = [
-    {name:"红", hex:"#ef4444"}, {name:"橙", hex:"#f97316"}, {name:"黄", hex:"#facc15"}, 
-    {name:"绿", hex:"#22c55e"}, {name:"青", hex:"#06b6d4"}, {name:"蓝", hex:"#3b82f6"}, 
-    {name:"紫", hex:"#a855f7"}, {name:"粉", hex:"#ec4899"}, {name:"棕", hex:"#8d6e63"}, 
+    {name:"深红", hex:"#b91c1c"},   // Deep Red (Distinct from pink)
+    {name:"亮橙", hex:"#fb923c"},   // Bright Orange
+    {name:"柠檬", hex:"#facc15"},
+    {name:"草绿", hex:"#22c55e"},
+    {name:"海盐", hex:"#06b6d4"},
+    {name:"深蓝", hex:"#1d4ed8"},
+    {name:"葡萄", hex:"#7e22ce"},
+    {name:"荧光粉", hex:"#f472b6"}, // Hot Pink (Distinct from red/orange)
+    {name:"拿铁", hex:"#78350f"},
+    /* --- 新增 5 个高辨识度颜色 (Level 4+) --- */
+    {name:"酷黑", hex:"#111827"},   // Black
+    {name:"钛银", hex:"#9ca3af"},   // Silver/Grey
+    {name:"荧光绿", hex:"#a3e635"}, // Lime Green (Distinct from grass)
+    {name:"靛蓝", hex:"#312e81"},   // Indigo (Very dark blue)
+    {name:"土豪金", hex:"#ca8a04"}, // Gold
   ];
-  const SAVE_KEY = "soda_factory_v12_final";
   
+  const SAVE_KEY = "soda_factory_v13_limit";
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
+  
+  // 设置音频
   bgSoda.src = "soda.mp3"; sfxPop.src = "pop.mp3"; sfxCorrect.src = "correct.mp3";
   let soundOn = false;
 
@@ -344,13 +329,28 @@
   let dragGhostEl = null;
   let selectedColorId = null;
 
+  /* ===== 核心：根据瓶子数量调整布局密度 ===== */
+  function updateLayoutMode() {
+    const board = document.getElementById('board');
+    // 如果数量 > 8，开启密集模式
+    if (pairCount > 8) {
+      board.classList.add('mode-dense');
+    } else {
+      board.classList.remove('mode-dense');
+    }
+  }
+
   function updateBeltBackground() {
-    const slotH = 60; 
-    const gap = 14;   
+    // 根据 CSS 变量读取实际高度（近似值），或者直接根据模式硬编码
+    const isDense = pairCount > 8;
+    const slotH = isDense ? 34 : 60;
+    const gap = isDense ? 6 : 14;
+    
     const totalH = pairCount * (slotH + gap) - gap;
     document.querySelector('.history-viewport').style.setProperty('--belt-bg-height', `${totalH}px`);
   }
 
+  /* ===== 存档 ===== */
   function saveGame() {
     localStorage.setItem(SAVE_KEY, JSON.stringify({ level, pairCount, ids, correctSeq, attempts, activeRowIndex }));
   }
@@ -366,26 +366,42 @@
     } catch(e) { return false; }
   }
 
+  /* ===== 逻辑：前3关简单，第4关开始地狱模式 ===== */
   const shuffle = arr => arr.sort(() => Math.random() - 0.5);
-  function pairsForLevel(lvl) {
-    if (lvl === 1) return 3;
-    const base = 4 + Math.floor((lvl - 2) / 3);
-    return Math.min(base, 6); 
+
+  function getLevelConfig(lvl) {
+    // 关卡 1-3：固定简单模式
+    if (lvl <= 3) {
+      return { count: 3 + (lvl - 1), poolSize: 9 }; // 3, 4, 5
+    }
+    // 关卡 4+：随机 9 到 14 个瓶子！
+    // 并且颜色池扩大到 14 个
+    const randomCount = 9 + Math.floor(Math.random() * 6); // 9,10,11,12,13,14
+    return { count: randomCount, poolSize: 14 };
   }
 
   function setupLevel(isNew = true) {
     if (isNew) {
-      pairCount = pairsForLevel(level);
-      const pool = COLOR_POOL.map((_, i) => i);
-      ids = shuffle(pool).slice(0, pairCount);
+      const config = getLevelConfig(level);
+      pairCount = config.count;
+      
+      // 根据配置的 poolSize 截取颜色池
+      const currentPool = COLOR_POOL.slice(0, config.poolSize);
+      const poolIndices = currentPool.map((_, i) => i);
+      
+      // 从池子里随机选出 pairCount 个不同的颜色作为本关答案
+      ids = shuffle(poolIndices).slice(0, pairCount);
       correctSeq = shuffle([...ids]);
+
       attempts = [{
         guess: Array(pairCount).fill(null), status: "active", residue: Array(pairCount).fill(null)
       }];
       activeRowIndex = 0;
       selectedColorId = null;
     }
-    updateBeltBackground();
+    
+    updateLayoutMode(); // 切换疏密模式
+    updateBeltBackground(); // 更新背景条纹
     saveGame();
     renderAll();
     setTimeout(scrollToEnd, 100);
@@ -433,6 +449,7 @@
     }
   }
 
+  /* ===== 渲染 ===== */
   const elAttempts = document.getElementById("attempts");
   const elPalette = document.getElementById("palette");
 
@@ -489,21 +506,20 @@
           if (isLast && selectedColorId !== null) placeColor(rIdx, i, selectedColorId);
         };
 
-        // 渲染错误糊色（Residue）
         if (row.residue && row.residue[i]) {
           const s = document.createElement("div");
           s.className = "residue";
           s.style.setProperty("--residue-color", row.residue[i]);
           cup.appendChild(s);
-          cup.classList.add("isWrong"); // 这里会触发白框样式
+          cup.classList.add("isWrong"); // 触发白框
         }
 
         const cid = row.guess[i];
         if (cid !== null) {
           const isCorrect = row.marks && row.marks[i];
           const isFinished = row.status !== "active";
-          // 如果结束且正确，或者还在进行中：显示罐子
-          // 如果结束且错误：因为有residue了，就不显示罐子了（符合“变成糊色”的描述）
+          // 只有正确或者还在玩的时候显示罐子
+          // 错误的时候，只显示残留糊色（上面的 if residue 块已处理）
           if (!isFinished || isCorrect) {
             const canWrap = document.createElement("div");
             canWrap.innerHTML = createCanHTML(cid);
@@ -525,6 +541,7 @@
     renderAttempts();
   }
 
+  /* ===== 交互 ===== */
   function addInteraction(el, colorId, inGrid) {
     let startX = 0, startY = 0;
     let hasMoved = false;
@@ -601,7 +618,7 @@
   document.getElementById("resetLevel").onclick = () => setupLevel(true);
   document.getElementById("restart").onclick = () => { localStorage.removeItem(SAVE_KEY); level = 1; setupLevel(true); };
 
-  if (!loadGame()) setupLevel(true); else { updateBeltBackground(); renderAll(); setTimeout(scrollToEnd, 200); }
+  if (!loadGame()) setupLevel(true); else { updateLayoutMode(); updateBeltBackground(); renderAll(); setTimeout(scrollToEnd, 200); }
 })();
 </script>
 </body>
