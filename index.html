@@ -45,7 +45,6 @@
       color: #fff;
       overflow:hidden;
       background-color: var(--floor-color);
-      /* ✨ 地板纹理 */
       background-image: 
         linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
@@ -212,14 +211,14 @@
     .cup {
       width: 44px;
       height: var(--slot-h);
-      /* ✅ 1. 这里的背景色是“框内原来的颜色” */
+      /* ✅ 保留原框内颜色 (半透明黑) */
       background: rgba(0,0,0,0.15); 
       border-radius: 6px;
       position: relative;
       border: 1px solid rgba(255,255,255,0.15);
       display: flex; justify-content: center; align-items: center; 
       box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-      /* ✅ 限制爆炸在框内 */
+      /* ✅ 核心：限制墨渍在框内，不溢出 */
       overflow: hidden;
     }
     .cup.dropHover { 
@@ -230,7 +229,8 @@
     .cup.isCorrect { border: 2px solid #22c55e; background: rgba(34,197,94,0.15); }
     .cup.isWrong { 
       border: 2px solid #ffffff; 
-      background: rgba(255,255,255,0.2); 
+      /* ✅ 背景色保持稍微深一点，让亮色墨渍更明显 */
+      background: rgba(0,0,0,0.2); 
       box-shadow: 0 0 8px rgba(255,255,255,0.6);
     }
 
@@ -272,23 +272,31 @@
       filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
     }
     
-    /* 🫧 气泡破裂特效 (Bubble Burst) */
-    /* ✅ 2. 墨渍效果：通过 z-index: 5 叠加在背景之上，不覆盖背景 */
+    /* ⚫ 优化的 Ink Blot (圆润墨渍) */
     .residue {
       position: absolute;
-      left: 50%; top: 50%;
-      width: 10px; height: 10px;
-      transform: translate(-50%, -50%);
-      border-radius: 50%;
-      background: var(--residue-color);
-      opacity: 0.9;
+      /* ✅ 占比约 80% (上下左右各留 12%) */
+      inset: 12%; 
       z-index: 5;
-      /* 混合模式：让墨水颜色与底色融合，显得更自然 */
+      
+      background: var(--residue-color);
+      /* 圆形主体 */
+      border-radius: 50%;
+      opacity: 0.9;
+      
+      /* 混合模式：让墨渍颜色叠加在底色上 */
       mix-blend-mode: multiply;
-      animation: puffExpand 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      
+      /* 默认状态：静止（防止重绘时闪烁） */
+      transform: scale(1) rotate(var(--rot));
     }
 
-    /* 制造不规则的气泡云形状 */
+    /* 只有新产生的错误才会添加这个类，触发动画 */
+    .residue.anim-pop {
+      animation: inkExpand 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    /* 制造不规则边缘 (圆润气泡感) */
     .residue::before,
     .residue::after {
       content: ''; position: absolute;
@@ -296,18 +304,17 @@
       border-radius: 50%;
     }
     .residue::before {
-      width: 70%; height: 70%; top: -15%; left: -25%;
+      width: 70%; height: 70%; top: -10%; left: -15%;
       box-shadow: 20px 5px 0 var(--residue-color);
     }
     .residue::after {
-      width: 60%; height: 60%; bottom: -15%; right: -20%;
+      width: 60%; height: 60%; bottom: -10%; right: -15%;
       box-shadow: -15px -10px 0 var(--residue-color);
     }
 
-    /* 动画：稍微收敛一点，不要填满整个盒子，这样才能露出盒子的底色 */
-    @keyframes puffExpand {
-      0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0.6; }
-      100% { transform: translate(-50%, -50%) scale(1.4); opacity: 0.85; }
+    @keyframes inkExpand {
+      0% { transform: scale(0.3) rotate(0deg); opacity: 0.5; }
+      100% { transform: scale(1) rotate(var(--rot)); opacity: 0.9; }
     }
 
     .drag-ghost {
@@ -376,7 +383,7 @@
     {name:"土豪金", hex:"#ca8a04"}, 
   ];
   
-  const SAVE_KEY = "soda_factory_v22_fix_random";
+  const SAVE_KEY = "soda_factory_v23_no_flash";
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
@@ -427,15 +434,12 @@
     } catch(e) { return false; }
   }
 
-  /* ✅ Fisher-Yates 洗牌算法：保证绝对随机 */
+  /* ✅ Fisher-Yates 洗牌算法：真随机 */
   function shuffle(array) {
     let currentIndex = array.length, randomIndex;
-    // 当还剩有元素未洗牌时...
     while (currentIndex != 0) {
-      // 选取一个剩余元素...
       randomIndex = Math.floor(Math.random() * currentIndex);
       currentIndex--;
-      // 并与当前元素交换
       [array[currentIndex], array[randomIndex]] = [
         array[randomIndex], array[currentIndex]];
     }
@@ -459,11 +463,10 @@
       const currentPool = COLOR_POOL.slice(0, config.poolSize);
       const poolIndices = currentPool.map((_, i) => i);
       
-      // 1. 随机选出本关的配色 (IDs)
+      // 1. 货架顺序：随机选出 pairCount 个颜色
       ids = shuffle([...poolIndices]).slice(0, pairCount);
       
-      // 2. ✅ 使用 Fisher-Yates 再次完全打乱作为正确答案
-      // 必须使用 [...ids] 复制一份，否则会打乱原来的 ids (货架顺序)
+      // 2. 正确答案：基于货架颜色再次完全打乱 (真随机)
       correctSeq = shuffle([...ids]);
 
       attempts = [{
@@ -500,6 +503,8 @@
 
     if (!allCorrect) {
       row.residue = row.guess.map((id, i) => marks[i] ? null : COLOR_POOL[id].hex);
+      // ✅ 记录失败时间戳，用于防止后续重绘时闪烁
+      row.failTime = Date.now(); 
       playSound(sfxPop);
     } else {
       playSound(sfxCorrect);
@@ -582,11 +587,22 @@
           };
         }
 
-        // 渲染气泡破裂特效
+        // 渲染墨渍 (Ink Blot)
         if (row.residue && row.residue[i]) {
           const s = document.createElement("div");
           s.className = "residue";
           s.style.setProperty("--residue-color", row.residue[i]);
+          
+          // 给每个墨渍一个随机旋转角度，看起来更自然
+          // 为了不让它每次重绘都变，简单利用索引生成伪随机角度
+          const rot = (rIdx * 13 + i * 7) % 360; 
+          s.style.setProperty("--rot", rot + "deg");
+
+          // ✅ 核心：检查是否需要播放动画
+          // 只有当距离产生墨渍的时间小于 800ms 时，才加动画类
+          const isFresh = (Date.now() - (row.failTime || 0)) < 800;
+          if (isFresh) s.classList.add("anim-pop");
+
           cup.appendChild(s);
           cup.classList.add("isWrong"); 
         }
