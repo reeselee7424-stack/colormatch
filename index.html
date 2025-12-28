@@ -13,7 +13,7 @@
   
   <style>
     :root{
-      /* 默认尺寸 (Standard Mode) */
+      /* 默认尺寸 */
       --slot-h: 60px;
       --slot-gap: 14px;
       --can-w: 38px;
@@ -28,7 +28,7 @@
       --safety-yellow: #e6b800;
     }
 
-    /* ⚡️ 密集模式 (Dense Mode)：当瓶子数量>8时启用，防止溢出屏幕 */
+    /* ⚡️ 密集模式 (Dense Mode)：当瓶子数量>8时启用 */
     .mode-dense {
       --slot-h: 34px !important;
       --slot-gap: 6px !important;
@@ -302,7 +302,7 @@
     {name:"葡萄", hex:"#7e22ce"},
     {name:"荧光粉", hex:"#f472b6"}, // Hot Pink (Distinct from red/orange)
     {name:"拿铁", hex:"#78350f"},
-    /* --- 新增 5 个高辨识度颜色 (Level 4+) --- */
+    /* --- 新增 5 个高辨识度颜色 (Level 22+) --- */
     {name:"酷黑", hex:"#111827"},   // Black
     {name:"钛银", hex:"#9ca3af"},   // Silver/Grey
     {name:"荧光绿", hex:"#a3e635"}, // Lime Green (Distinct from grass)
@@ -310,12 +310,11 @@
     {name:"土豪金", hex:"#ca8a04"}, // Gold
   ];
   
-  const SAVE_KEY = "soda_factory_v13_limit";
+  const SAVE_KEY = "soda_factory_v14_progression";
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
   
-  // 设置音频
   bgSoda.src = "soda.mp3"; sfxPop.src = "pop.mp3"; sfxCorrect.src = "correct.mp3";
   let soundOn = false;
 
@@ -332,7 +331,6 @@
   /* ===== 核心：根据瓶子数量调整布局密度 ===== */
   function updateLayoutMode() {
     const board = document.getElementById('board');
-    // 如果数量 > 8，开启密集模式
     if (pairCount > 8) {
       board.classList.add('mode-dense');
     } else {
@@ -341,7 +339,6 @@
   }
 
   function updateBeltBackground() {
-    // 根据 CSS 变量读取实际高度（近似值），或者直接根据模式硬编码
     const isDense = pairCount > 8;
     const slotH = isDense ? 34 : 60;
     const gap = isDense ? 6 : 14;
@@ -350,7 +347,6 @@
     document.querySelector('.history-viewport').style.setProperty('--belt-bg-height', `${totalH}px`);
   }
 
-  /* ===== 存档 ===== */
   function saveGame() {
     localStorage.setItem(SAVE_KEY, JSON.stringify({ level, pairCount, ids, correctSeq, attempts, activeRowIndex }));
   }
@@ -366,17 +362,21 @@
     } catch(e) { return false; }
   }
 
-  /* ===== 逻辑：前3关简单，第4关开始地狱模式 ===== */
+  /* ===== 🎢 关卡逻辑：3关一进阶，22关后随机 ===== */
   const shuffle = arr => arr.sort(() => Math.random() - 0.5);
 
   function getLevelConfig(lvl) {
-    // 关卡 1-3：固定简单模式
-    if (lvl <= 3) {
-      return { count: 3 + (lvl - 1), poolSize: 9 }; // 3, 4, 5
+    // Level 1-21: 循序渐进 (3个到9个)
+    if (lvl <= 21) {
+      // 公式：1-3关=3, 4-6关=4 ... 19-21关=9
+      const count = 3 + Math.floor((lvl - 1) / 3);
+      // 只使用前9种基础色
+      return { count: count, poolSize: 9 };
     }
-    // 关卡 4+：随机 9 到 14 个瓶子！
-    // 并且颜色池扩大到 14 个
+    
+    // Level 22+: 随机挑战 (9-14个)
     const randomCount = 9 + Math.floor(Math.random() * 6); // 9,10,11,12,13,14
+    // 解锁全部14种颜色
     return { count: randomCount, poolSize: 14 };
   }
 
@@ -385,11 +385,11 @@
       const config = getLevelConfig(level);
       pairCount = config.count;
       
-      // 根据配置的 poolSize 截取颜色池
+      // 1. 截取当前可用的颜色池 (9色 或 14色)
       const currentPool = COLOR_POOL.slice(0, config.poolSize);
       const poolIndices = currentPool.map((_, i) => i);
       
-      // 从池子里随机选出 pairCount 个不同的颜色作为本关答案
+      // 2. 从可用池中随机选出 pairCount 个不同的颜色
       ids = shuffle(poolIndices).slice(0, pairCount);
       correctSeq = shuffle([...ids]);
 
@@ -400,8 +400,8 @@
       selectedColorId = null;
     }
     
-    updateLayoutMode(); // 切换疏密模式
-    updateBeltBackground(); // 更新背景条纹
+    updateLayoutMode(); 
+    updateBeltBackground(); 
     saveGame();
     renderAll();
     setTimeout(scrollToEnd, 100);
@@ -511,7 +511,7 @@
           s.className = "residue";
           s.style.setProperty("--residue-color", row.residue[i]);
           cup.appendChild(s);
-          cup.classList.add("isWrong"); // 触发白框
+          cup.classList.add("isWrong"); 
         }
 
         const cid = row.guess[i];
@@ -519,7 +519,6 @@
           const isCorrect = row.marks && row.marks[i];
           const isFinished = row.status !== "active";
           // 只有正确或者还在玩的时候显示罐子
-          // 错误的时候，只显示残留糊色（上面的 if residue 块已处理）
           if (!isFinished || isCorrect) {
             const canWrap = document.createElement("div");
             canWrap.innerHTML = createCanHTML(cid);
