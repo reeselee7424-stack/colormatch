@@ -217,7 +217,7 @@
       border: 1px solid rgba(255,255,255,0.15);
       display: flex; justify-content: center; align-items: center; 
       box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-      /* ✅ 限制爆炸在框内 */
+      /* ✅ 限制爆炸范围在框内 */
       overflow: hidden;
     }
     .cup.dropHover { 
@@ -257,6 +257,8 @@
       background: #e5e7eb; border: 1px solid #9ca3af; border-radius: 2px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
+    
+    /* 🏷️ Logo：透明背景 */
     .can-label {
       position: absolute; top: 20%; bottom: 20%; left: 0; right: 0;
       background: transparent; 
@@ -268,33 +270,34 @@
       filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
     }
     
-    /* 💥 SVG 尖锐喷溅容器 */
+    /* 💥 SVG 尖锐喷溅容器 (绝对静止) */
     .residue {
       position: absolute;
-      /* ✅ 12% 边距 = 约80% 面积 (居中) */
-      inset: 12%; 
+      inset: 12%; /* 80% 大小 */
       z-index: 5;
       opacity: 1;
       pointer-events: none;
-      
-      /* ✅ 纯色显示，无阴影，无混合模式 */
       mix-blend-mode: normal; 
+      /* ✅ 使用固定参数，不让它乱动 */
+      transform: scale(var(--scale, 1)) rotate(var(--rot, 0deg));
     }
     
     /* SVG 填充 */
     .residue svg {
       width: 100%; height: 100%;
-      fill: var(--residue-color); /* 动态颜色 */
-      
-      /* 初始状态：缩小 */
-      transform: scale(0.2);
-      transform-origin: center;
+      fill: var(--residue-color);
+      /* 只有刚产生时会有一个膨胀动画，之后保持静止 */
       opacity: 0;
     }
 
     /* 动画：瞬间喷出 */
     .residue.anim-pop svg {
       animation: splashAnim 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    /* 已完成的错误：直接显示，无动画 */
+    .residue.static svg {
+      opacity: 1;
+      transform: scale(1.1);
     }
     
     @keyframes splashAnim {
@@ -368,7 +371,7 @@
     {name:"土豪金", hex:"#ca8a04"}, 
   ];
   
-  const SAVE_KEY = "soda_factory_v26_svg_spiky";
+  const SAVE_KEY = "soda_factory_v27_fixed_svg";
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
@@ -387,7 +390,7 @@
   let selectedColorId = null;
 
   /* ===== 💥 复刻图二：尖锐喷溅 SVG 形状 ===== */
-  function getSplashSVG(color) {
+  function getSplashSVG() {
     return `
       <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <path d="M50,25 C55,20 65,20 70,30 C75,25 85,30 80,40 C85,45 85,55 80,60 C85,65 75,75 70,70 C65,80 55,80 50,75 C45,80 35,80 30,70 C25,75 15,65 20,60 C15,55 15,45 20,40 C15,30 25,25 30,30 C35,20 45,20 50,25 Z" />
@@ -435,6 +438,7 @@
     } catch(e) { return false; }
   }
 
+  /* ✅ Fisher-Yates 洗牌算法：真随机 */
   function shuffle(array) {
     let currentIndex = array.length, randomIndex;
     while (currentIndex != 0) {
@@ -500,6 +504,13 @@
 
     if (!allCorrect) {
       row.residue = row.guess.map((id, i) => marks[i] ? null : COLOR_POOL[id].hex);
+      
+      // ✅ 核心：生成并保存视觉参数 (旋转+大小)，确保每次渲染都一样
+      row.residueSpecs = row.residue.map(() => ({
+        rot: Math.floor(Math.random() * 360),
+        scale: 0.9 + Math.random() * 0.3
+      }));
+      
       row.failTime = Date.now(); 
       playSound(sfxPop);
     } else {
@@ -583,18 +594,23 @@
           };
         }
 
-        // 💥 渲染 SVG 喷溅 (Solid)
+        // 💥 渲染 SVG 喷溅 (固定版)
         if (row.residue && row.residue[i]) {
           const s = document.createElement("div");
           s.className = "residue";
           s.style.setProperty("--residue-color", row.residue[i]);
           
-          // 插入 SVG 代码
-          s.innerHTML = getSplashSVG(row.residue[i]);
+          // ✅ 读取保存的视觉参数，如果没有则使用默认值
+          const spec = (row.residueSpecs && row.residueSpecs[i]) || { rot: 0, scale: 1 };
+          s.style.setProperty("--rot", spec.rot + "deg");
+          s.style.setProperty("--scale", spec.scale);
           
-          // 动画判定
+          s.innerHTML = getSplashSVG();
+          
+          // 动画逻辑：只有新产生的（800ms内）才播放动画，否则直接显示最终状态
           const isFresh = (Date.now() - (row.failTime || 0)) < 800;
           if (isFresh) s.classList.add("anim-pop");
+          else s.classList.add("static");
 
           cup.appendChild(s);
           cup.classList.add("isWrong"); 
