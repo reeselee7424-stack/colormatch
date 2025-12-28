@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
-  <title>小明汽水流水线</title>
+  <title>汽水流水线</title>
 
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#f0f9ff">
@@ -24,7 +24,6 @@
       --belt-light: #bbb;
       --belt-border: #666;
       --floor-color: #c0c0c0;
-      --industrial-grey: #4a4a4a;
       --safety-yellow: #e6b800;
     }
 
@@ -46,37 +45,38 @@
       color: #fff;
       overflow:hidden;
       background-color: var(--floor-color);
-      /* ✨ 高画质地板纹理 */
+      /* ✨ 高画质：恢复地板光泽 */
       background-image: 
-        linear-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+        linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
       background-size: 50px 50px;
       user-select: none;
       -webkit-user-select: none;
       touch-action: none;
     }
 
-    /* 🪟 背景窗户 (恢复高画质渐变) */
+    /* 🪟 背景窗户 */
     .factory-windows {
       position: fixed; top: 0; left: 0; right: 0; height: 18vh;
       background: linear-gradient(to bottom, #2c3e50, #4a5c6e);
       z-index: 0;
       display: flex; justify-content: space-evenly; align-items: center;
       padding: 0 20px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
       border-bottom: 6px solid #34495e;
     }
     .window-pane {
       width: 12%; height: 60%;
-      /* ✨ 恢复光泽感 */
-      background: linear-gradient(135deg, #aaddff 0%, #ffffff 50%, #88ccff 100%);
+      background: linear-gradient(135deg, #aaddff 0%, #ffffff 60%, #88ccff 100%);
       border: 4px solid #1a252f;
-      box-shadow: inset 0 0 20px rgba(255,255,255,0.8), 0 0 15px rgba(173, 216, 230, 0.6);
+      box-shadow: inset 0 0 20px rgba(255,255,255,0.9), 0 0 15px rgba(173, 216, 230, 0.8);
       position: relative;
+      overflow: hidden;
     }
     .window-pane::after {
-      content: ""; position: absolute; inset: 0;
-      background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.4) 45%, transparent 50%);
+      content: ""; position: absolute; inset: -50%;
+      background: linear-gradient(45deg, transparent 45%, rgba(255,255,255,0.6) 50%, transparent 55%);
+      transform: rotate(30deg);
     }
 
     .wrap{ 
@@ -91,43 +91,49 @@
       padding-top: 10px;
     }
 
-    /* 标题栏 (恢复磨砂玻璃) */
+    /* 💎 高画质玻璃标题栏 */
     .header-bar {
       display: flex; justify-content: space-between; align-items: center;
       padding: 12px 18px;
-      background: rgba(40, 44, 52, 0.85);
-      /* ✨ 恢复模糊特效 */
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(30, 35, 45, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 12px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      box-shadow: 
+        0 8px 32px 0 rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255,255,255,0.1);
       margin-top: 10px;
     }
-    h1 { margin:0; font-size: 18px; font-weight: bold; letter-spacing: 1px; }
-    .meta { display:flex; gap:12px; font-size:13px; color:#ddd; }
+    
+    h1 { margin:0; font-size: 18px; font-weight: bold; letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    .meta { display:flex; gap:12px; font-size:13px; color:#ddd; font-weight: 500; }
+    
     .btn {
-      background: linear-gradient(to bottom, #666, #444); color: #fff;
-      border: 1px solid #777; border-bottom: 2px solid #222;
-      padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;
+      background: linear-gradient(to bottom, #555, #333); color: #fff;
+      border: 1px solid #666; border-bottom: 2px solid #111;
+      padding: 4px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      transition: all 0.1s;
     }
-    .btn:active { transform:translateY(1px); border-bottom-width:1px; }
-    #restart { background: linear-gradient(to bottom, #d32f2f, #b71c1c); border-color: #f44336; }
+    .btn:active { transform:translateY(2px); border-bottom-width:1px; }
+    #restart { background: linear-gradient(to bottom, #d32f2f, #9a0007); border-color: #ef5350; }
 
-    /* 游戏区域 (恢复半透明玻璃) */
+    /* 💎 高画质磨砂游戏面板 */
     .game-board {
       flex: 1;
       display: grid;
       grid-template-columns: 1fr 90px; 
       gap: 12px;
       overflow: hidden; 
-      background: rgba(255, 255, 255, 0.7); 
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      background: rgba(255, 255, 255, 0.65); 
+      border-radius: 16px;
+      box-shadow: 
+        0 20px 50px rgba(0,0,0,0.2),
+        inset 0 0 0 1px rgba(255,255,255,0.4);
       padding: 12px;
-      /* ✨ 恢复模糊特效 */
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
 
     /* 左侧流水线 */
@@ -142,7 +148,6 @@
       padding: 0 20px;
       
       background-color: rgba(0,0,0,0.05);
-      /* ✨ 恢复细腻的金属光泽和阴影 */
       background-image: repeating-linear-gradient(
         to bottom,
         var(--belt-border) 0px, 
@@ -163,28 +168,26 @@
       border-top: 4px solid #555;
       border-bottom: 4px solid #555;
       border-radius: 4px;
-      box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.3);
     }
     .history-viewport::-webkit-scrollbar { height: 6px; }
     .history-viewport::-webkit-scrollbar-thumb { background: #666; border-radius: 3px; }
 
-    /* === 右侧货架 (保持对齐修正) === */
+    /* === 右侧货架 === */
     .shelf-column {
-      background: linear-gradient(135deg, #ddd, #bbb);
-      border: 2px solid #666;
-      border-radius: 6px;
+      background: linear-gradient(135deg, #d1d5db, #9ca3af);
+      border: 2px solid #4b5563;
+      border-radius: 8px;
       padding: 10px 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      
-      /* ✅ 保持：垂直居中对齐 */
-      justify-content: center; 
-      /* ✅ 保持：间距同步 */
+      justify-content: center;
       gap: var(--slot-gap);
-      
       overflow-y: auto;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+      box-shadow: 
+        inset 0 0 15px rgba(0,0,0,0.3),
+        0 5px 15px rgba(0,0,0,0.2);
     }
 
     .rowCard {
@@ -196,14 +199,15 @@
     }
     .rowCard.active { z-index: 2; }
     .rowCard.active::before {
-      content: ""; position: absolute; inset: -4px -6px; 
-      border: 2px dashed var(--safety-yellow);
-      border-radius: 8px;
-      background: rgba(255, 215, 0, 0.05);
+      content: ""; position: absolute; inset: -6px -6px; 
+      border: 3px dashed var(--safety-yellow);
+      border-radius: 12px;
+      background: rgba(255, 235, 59, 0.1);
       z-index: -1;
       animation: pulseBorder 2s infinite;
+      box-shadow: 0 0 20px rgba(255, 235, 59, 0.3);
     }
-    @keyframes pulseBorder { 50% { opacity: 0.5; } }
+    @keyframes pulseBorder { 50% { opacity: 0.6; border-color: #fff; } }
 
     .cup {
       width: 44px;
@@ -211,53 +215,84 @@
       background: rgba(0,0,0,0.15); 
       border-radius: 6px;
       position: relative;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
       display: flex; justify-content: center; align-items: center; 
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
     }
-    .cup.dropHover { background: rgba(255,255,255,0.6); outline: 2px solid var(--safety-yellow); }
-    .cup.isCorrect { border: 2px solid #22c55e; background: rgba(34,197,94,0.1); }
-    .cup.isWrong { border: 2px solid #ffffff; background: rgba(255,255,255,0.2); }
+    .cup.dropHover { 
+      background: rgba(255,255,255,0.7); 
+      outline: 2px solid var(--safety-yellow); 
+      box-shadow: 0 0 15px var(--safety-yellow);
+    }
+    /* ✅ 正确：绿框 */
+    .cup.isCorrect { border: 2px solid #22c55e; background: rgba(34,197,94,0.15); }
+    /* ⚪ 错误：白框 (按要求) */
+    .cup.isWrong { 
+      border: 2px solid #ffffff; 
+      background: rgba(255,255,255,0.2); 
+      box-shadow: 0 0 8px rgba(255,255,255,0.6);
+    }
 
+    /* 💎 易拉罐 */
     .can {
       width: var(--can-w); height: var(--can-h);
       position: relative; z-index: 10;
       background-color: var(--can-color);
-      /* ✨ 恢复更明显的金属光泽 */
-      background-image: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.6) 40%, rgba(0,0,0,0.1) 100%);
+      background-image: 
+        linear-gradient(90deg, 
+          rgba(255,255,255,0.15) 0%, 
+          rgba(255,255,255,0.6) 35%, 
+          rgba(255,255,255,0.1) 50%,
+          rgba(0,0,0,0.15) 100%);
       border-radius: 4px 4px 6px 6px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      box-shadow: 2px 4px 8px rgba(0,0,0,0.4);
       cursor: pointer;
-      transition: transform 0.1s;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     .can.selected {
-      box-shadow: 0 0 0 2px #fff, 0 0 10px var(--safety-yellow);
-      transform: scale(1.1); z-index: 20;
+      box-shadow: 0 0 0 2px #fff, 0 0 15px var(--safety-yellow);
+      transform: scale(1.15); z-index: 20;
     }
     .can::before {
-      content: ""; position: absolute; top: -2px; left: 2px; right: 2px; height: 3px;
-      background: #ccc; border: 1px solid #999; border-radius: 2px;
+      content: ""; position: absolute; top: -3px; left: 3px; right: 3px; height: 4px;
+      background: #e5e7eb; border: 1px solid #9ca3af; border-radius: 2px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
     .can-label {
       position: absolute; top: 20%; bottom: 20%; left: 0; right: 0;
-      background: #fff; z-index: 2;
+      background: rgba(255,255,255,0.9); z-index: 2;
       background-image: url('xiaoming.png'); 
       background-size: contain; background-repeat: no-repeat; background-position: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     
+    /* 💥 纯代码爆炸效果 (CSS Shape) */
     .residue {
-      position: absolute; inset: 2px;
-      background: var(--residue-color);
-      border-radius: 50%;
-      filter: blur(5px);
-      opacity: 0.9;
+      position: absolute;
+      inset: -10px; /* 稍微大一点，产生爆炸张力 */
+      background-color: var(--residue-color);
       z-index: 5;
-      transform: scale(0.8); 
+      /* 核心：用 clip-path 裁切出爆炸形状，由 JS 动态生成多边形 */
+      clip-path: var(--blast-shape); 
+      opacity: 0.9;
+      transform: scale(1);
+      /* 动画：瞬间膨胀 */
+      animation: blastAnim 0.3s cubic-bezier(0.1, 0.9, 0.2, 1.2) forwards;
+      /* 增加一点滤镜让它看起来更像液体/烟雾 */
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    }
+    @keyframes blastAnim {
+      0% { transform: scale(0) rotate(0deg); opacity: 0.5; }
+      100% { transform: scale(1) rotate(var(--blast-rotate)); opacity: 0.9; }
     }
 
     .drag-ghost {
       position: fixed; pointer-events: none !important; z-index: 9999;
-      transform: translate(-50%, -50%) scale(1.1); opacity: 0.9;
+      transform: translate(-50%, -50%) scale(1.2) rotate(5deg); opacity: 0.95;
+      filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4));
     }
+    
+    .paletteItem { margin-top: 0; }
     .used .can { opacity: 0.3; filter: grayscale(1); cursor: default; }
 
   </style>
@@ -317,7 +352,7 @@
     {name:"土豪金", hex:"#ca8a04"}, 
   ];
   
-  const SAVE_KEY = "soda_factory_v16_visuals";
+  const SAVE_KEY = "soda_factory_v18_final_code_blast";
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
@@ -334,6 +369,22 @@
   let draggingColorId = null;
   let dragGhostEl = null;
   let selectedColorId = null;
+
+  /* ===== 💥 核心：用代码生成随机爆炸形状 (SVG Path / Polygon) ===== */
+  function generateBlastPolygon() {
+    const points = [];
+    const steps = 16; // 爆炸刺的数量
+    for (let i = 0; i < steps; i++) {
+      const angle = (i / steps) * 2 * Math.PI;
+      // 随机半径，产生锯齿感
+      const r = (i % 2 === 0) ? (0.3 + Math.random() * 0.2) : (0.8 + Math.random() * 0.2); 
+      // 转换极坐标到百分比 (50% 50% 是中心)
+      const x = 50 + Math.cos(angle) * r * 50;
+      const y = 50 + Math.sin(angle) * r * 50;
+      points.push(`${x.toFixed(1)}% ${y.toFixed(1)}%`);
+    }
+    return `polygon(${points.join(',')})`;
+  }
 
   function updateLayoutMode() {
     const board = document.getElementById('board');
@@ -471,7 +522,9 @@
       canDiv.innerHTML = createCanHTML(id);
       const canEl = canDiv.firstElementChild;
       if (selectedColorId === id) canEl.classList.add("selected");
+      
       addInteraction(canEl, id, false); 
+      
       wrap.appendChild(canEl);
       elPalette.appendChild(wrap);
     });
@@ -490,6 +543,7 @@
         cup.dataset.r = rIdx;
         cup.dataset.c = i;
 
+        // 仅当前行允许交互
         if (isLast && selectedColorId !== null && row.guess[i] === null) {
           cup.style.outline = "2px dashed var(--safety-yellow)";
           cup.style.background = "rgba(255,255,255,0.5)";
@@ -498,27 +552,44 @@
           cup.style.background = "";
         }
 
-        cup.onclick = () => {
-          if (isLast && selectedColorId !== null) placeColor(rIdx, i, selectedColorId);
-        };
+        if (isLast) {
+          cup.onclick = () => {
+            if (selectedColorId !== null) placeColor(rIdx, i, selectedColorId);
+          };
+        }
 
+        // 💥 渲染爆炸
         if (row.residue && row.residue[i]) {
           const s = document.createElement("div");
           s.className = "residue";
           s.style.setProperty("--residue-color", row.residue[i]);
+          
+          // 动态生成一个随机的爆炸形状
+          s.style.setProperty("--blast-shape", generateBlastPolygon());
+          // 随机旋转一点点
+          s.style.setProperty("--blast-rotate", (Math.random() * 60 - 30) + "deg");
+          
           cup.appendChild(s);
-          cup.classList.add("isWrong"); 
+          cup.classList.add("isWrong"); // 白框
         }
 
         const cid = row.guess[i];
         if (cid !== null) {
           const isCorrect = row.marks && row.marks[i];
           const isFinished = row.status !== "active";
+          // 逻辑：正确保留，未结束保留。错误则不显示（被炸没了）
           if (!isFinished || isCorrect) {
             const canWrap = document.createElement("div");
             canWrap.innerHTML = createCanHTML(cid);
             const canEl = canWrap.firstElementChild;
-            addInteraction(canEl, cid, true); 
+            
+            // 🔒 只有当前行的瓶子可操作
+            if (isLast) {
+              addInteraction(canEl, cid, true); 
+            } else {
+              canEl.style.cursor = "default";
+            }
+            
             cup.appendChild(canEl);
             if (isFinished && isCorrect) cup.classList.add("isCorrect");
           }
@@ -558,7 +629,9 @@
         if (!inGrid) { 
            if (selectedColorId === colorId) selectedColorId = null;
            else { selectedColorId = colorId; playSound(bgSoda); }
-        } else selectedColorId = colorId;
+        } else {
+           selectedColorId = colorId;
+        }
         renderAll();
       }
       removeGhost();
