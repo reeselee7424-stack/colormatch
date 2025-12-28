@@ -218,7 +218,7 @@
       border: 1px solid rgba(255,255,255,0.15);
       display: flex; justify-content: center; align-items: center; 
       box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-      /* ✅ 限制爆炸范围在框内 */
+      /* ✅ 限制爆炸在框内 */
       overflow: hidden;
     }
     .cup.dropHover { 
@@ -259,40 +259,57 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
     
-    /* 🏷️ Logo：透明背景 + 修正尺寸 */
+    /* 🏷️ Logo：透明背景 */
     .can-label {
       position: absolute; top: 20%; bottom: 20%; left: 0; right: 0;
       background: transparent; 
       z-index: 2;
       background-image: url('xiaoming.png'); 
-      background-size: 70%; /* 缩小一点 */
+      background-size: 70%; 
       background-repeat: no-repeat; 
       background-position: center;
       filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
     }
     
-    /* 💥 纯 SVG 爆炸容器 */
+    /* ☁️ 圆润气泡爆炸特效 (Solid Color) */
     .residue {
       position: absolute;
-      /* 占满整个框，因为 SVG viewBox 会处理缩放 */
-      width: 100%; height: 100%;
-      top: 0; left: 0;
+      inset: 12%; 
       z-index: 5;
-      /* 混合模式：让颜色更自然地叠加 */
-      mix-blend-mode: multiply;
-      opacity: 0.9;
-      pointer-events: none;
+      
+      background: var(--residue-color);
+      border-radius: 50%; 
+      
+      /* ✅ 修改：不透明纯色，去除 mix-blend-mode，防止变暗 */
+      opacity: 1; 
+      
+      transform: scale(1) rotate(var(--rot));
     }
-    
-    /* 爆炸动画 */
-    .residue.anim-pop svg {
-      animation: splashAnim 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-      transform-origin: center center;
+
+    /* 动画 */
+    .residue.anim-pop {
+      animation: inkExpand 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
-    
-    @keyframes splashAnim {
-      0% { transform: scale(0); opacity: 0; }
-      100% { transform: scale(1.2); opacity: 0.95; }
+
+    /* 圆润形状 */
+    .residue::before,
+    .residue::after {
+      content: ''; position: absolute;
+      background: inherit;
+      border-radius: 50%;
+    }
+    .residue::before {
+      width: 70%; height: 70%; top: -10%; left: -15%;
+      box-shadow: 20px 5px 0 var(--residue-color);
+    }
+    .residue::after {
+      width: 60%; height: 60%; bottom: -10%; right: -15%;
+      box-shadow: -15px -10px 0 var(--residue-color);
+    }
+
+    @keyframes inkExpand {
+      0% { transform: scale(0.3) rotate(0deg); opacity: 0.5; }
+      100% { transform: scale(1) rotate(var(--rot)); opacity: 1; }
     }
 
     .drag-ghost {
@@ -361,7 +378,7 @@
     {name:"土豪金", hex:"#ca8a04"}, 
   ];
   
-  const SAVE_KEY = "soda_factory_v24_svg_blast";
+  const SAVE_KEY = "soda_factory_v25_solid_blob";
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
@@ -378,24 +395,6 @@
   let draggingColorId = null;
   let dragGhostEl = null;
   let selectedColorId = null;
-
-  /* ===== 💥 生成 SVG 爆炸代码 ===== */
-  function getSplashSVG(color) {
-    // 这是一个手写的 SVG 路径，模拟了中心液体和周围飞溅的水滴
-    // 路径数据 (d) 来自一个通用的喷溅图标，进行了简化和优化
-    return `
-      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <path fill="${color}" d="M50,25 C55,20 65,20 70,30 C75,25 85,30 80,40 C85,45 85,55 80,60 C85,65 75,75 70,70 C65,80 55,80 50,75 C45,80 35,80 30,70 C25,75 15,65 20,60 C15,55 15,45 20,40 C15,30 25,25 30,30 C35,20 45,20 50,25 Z" />
-        <circle cx="20" cy="30" r="4" fill="${color}" />
-        <circle cx="80" cy="30" r="3" fill="${color}" />
-        <circle cx="15" cy="50" r="3" fill="${color}" />
-        <circle cx="85" cy="50" r="4" fill="${color}" />
-        <circle cx="30" cy="80" r="3" fill="${color}" />
-        <circle cx="70" cy="80" r="3" fill="${color}" />
-        <circle cx="50" cy="15" r="3" fill="${color}" />
-      </svg>
-    `;
-  }
 
   function updateLayoutMode() {
     const board = document.getElementById('board');
@@ -462,7 +461,7 @@
       // 1. 货架顺序
       ids = shuffle([...poolIndices]).slice(0, pairCount);
       
-      // 2. 正确答案：基于货架颜色再次完全打乱
+      // 2. 正确答案
       correctSeq = shuffle([...ids]);
 
       attempts = [{
@@ -582,14 +581,15 @@
           };
         }
 
-        // 💥 渲染 SVG 爆炸
+        // 渲染墨渍 (Solid)
         if (row.residue && row.residue[i]) {
           const s = document.createElement("div");
           s.className = "residue";
-          // 插入 SVG 代码
-          s.innerHTML = getSplashSVG(row.residue[i]);
+          s.style.setProperty("--residue-color", row.residue[i]);
           
-          // 动画判定
+          const rot = (rIdx * 13 + i * 7) % 360; 
+          s.style.setProperty("--rot", rot + "deg");
+
           const isFresh = (Date.now() - (row.failTime || 0)) < 800;
           if (isFresh) s.classList.add("anim-pop");
 
