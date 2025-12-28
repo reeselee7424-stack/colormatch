@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
-  <title>汽水流水线</title>
+  <title>小明汽水流水线</title>
 
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#f0f9ff">
@@ -46,32 +46,37 @@
       color: #fff;
       overflow:hidden;
       background-color: var(--floor-color);
-      /* 优化：使用简单的背景图案 */
+      /* ✨ 高画质地板纹理 */
       background-image: 
-        linear-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+        linear-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
       background-size: 50px 50px;
       user-select: none;
       -webkit-user-select: none;
       touch-action: none;
     }
 
-    /* 🏭 背景窗户 - 静态化以减少重绘 */
+    /* 🪟 背景窗户 (恢复高画质渐变) */
     .factory-windows {
       position: fixed; top: 0; left: 0; right: 0; height: 18vh;
-      background: #34495e; /* 纯色代替渐变，性能更好 */
+      background: linear-gradient(to bottom, #2c3e50, #4a5c6e);
       z-index: 0;
       display: flex; justify-content: space-evenly; align-items: center;
       padding: 0 20px;
-      border-bottom: 6px solid #2c3e50;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      border-bottom: 6px solid #34495e;
     }
     .window-pane {
       width: 12%; height: 60%;
-      background: #88ccff;
+      /* ✨ 恢复光泽感 */
+      background: linear-gradient(135deg, #aaddff 0%, #ffffff 50%, #88ccff 100%);
       border: 4px solid #1a252f;
+      box-shadow: inset 0 0 20px rgba(255,255,255,0.8), 0 0 15px rgba(173, 216, 230, 0.6);
       position: relative;
-      /* 简单的光泽，不做复杂投影 */
-      background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 100%);
+    }
+    .window-pane::after {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.4) 45%, transparent 50%);
     }
 
     .wrap{ 
@@ -82,41 +87,47 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      background: transparent; 
       padding-top: 10px;
     }
 
-    /* ⚡️ 优化：移除 backdrop-filter，改用高不透明度背景 */
+    /* 标题栏 (恢复磨砂玻璃) */
     .header-bar {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 18px;
-      background: rgba(40, 44, 52, 0.95); /* 更实一点的背景 */
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px 18px;
+      background: rgba(40, 44, 52, 0.85);
+      /* ✨ 恢复模糊特效 */
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
       margin-top: 10px;
     }
-    
     h1 { margin:0; font-size: 18px; font-weight: bold; letter-spacing: 1px; }
     .meta { display:flex; gap:12px; font-size:13px; color:#ddd; }
     .btn {
-      background: #555; color: #fff;
-      border: 1px solid #777; border-bottom: 2px solid #333;
+      background: linear-gradient(to bottom, #666, #444); color: #fff;
+      border: 1px solid #777; border-bottom: 2px solid #222;
       padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;
     }
     .btn:active { transform:translateY(1px); border-bottom-width:1px; }
-    #restart { background: #c0392b; border-color: #e74c3c; }
+    #restart { background: linear-gradient(to bottom, #d32f2f, #b71c1c); border-color: #f44336; }
 
-    /* ⚡️ 优化：移除 backdrop-filter */
+    /* 游戏区域 (恢复半透明玻璃) */
     .game-board {
       flex: 1;
       display: grid;
       grid-template-columns: 1fr 90px; 
       gap: 12px;
       overflow: hidden; 
-      background: rgba(236, 240, 241, 0.9); /* 亮色背景，不透明 */
+      background: rgba(255, 255, 255, 0.7); 
       border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
       padding: 12px;
+      /* ✨ 恢复模糊特效 */
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
     }
 
     /* 左侧流水线 */
@@ -131,6 +142,7 @@
       padding: 0 20px;
       
       background-color: rgba(0,0,0,0.05);
+      /* ✨ 恢复细腻的金属光泽和阴影 */
       background-image: repeating-linear-gradient(
         to bottom,
         var(--belt-border) 0px, 
@@ -151,28 +163,28 @@
       border-top: 4px solid #555;
       border-bottom: 4px solid #555;
       border-radius: 4px;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
     }
     .history-viewport::-webkit-scrollbar { height: 6px; }
-    .history-viewport::-webkit-scrollbar-thumb { background: #7f8c8d; border-radius: 3px; }
+    .history-viewport::-webkit-scrollbar-thumb { background: #666; border-radius: 3px; }
 
-    /* === 右侧货架 (对齐修正) === */
+    /* === 右侧货架 (保持对齐修正) === */
     .shelf-column {
-      background: #bdc3c7;
-      border: 2px solid #7f8c8d;
+      background: linear-gradient(135deg, #ddd, #bbb);
+      border: 2px solid #666;
       border-radius: 6px;
       padding: 10px 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       
-      /* ✅ 核心修正1：垂直居中，与左侧流水线对齐 */
+      /* ✅ 保持：垂直居中对齐 */
       justify-content: center; 
-      
-      /* ✅ 核心修正2：间距同步，使用与流水线相同的变量 */
+      /* ✅ 保持：间距同步 */
       gap: var(--slot-gap);
       
       overflow-y: auto;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
     }
 
     .rowCard {
@@ -183,7 +195,6 @@
       position: relative;
     }
     .rowCard.active { z-index: 2; }
-    /* 优化：简化动画阴影 */
     .rowCard.active::before {
       content: ""; position: absolute; inset: -4px -6px; 
       border: 2px dashed var(--safety-yellow);
@@ -197,29 +208,29 @@
     .cup {
       width: 44px;
       height: var(--slot-h);
-      background: rgba(0,0,0,0.1); 
+      background: rgba(0,0,0,0.15); 
       border-radius: 6px;
       position: relative;
-      border: 1px solid rgba(0,0,0,0.1);
+      border: 1px solid rgba(255,255,255,0.1);
       display: flex; justify-content: center; align-items: center; 
     }
     .cup.dropHover { background: rgba(255,255,255,0.6); outline: 2px solid var(--safety-yellow); }
-    .cup.isCorrect { border: 2px solid #27ae60; background: rgba(39, 174, 96, 0.1); }
-    .cup.isWrong { border: 2px solid #ffffff; background: rgba(255,255,255,0.4); }
+    .cup.isCorrect { border: 2px solid #22c55e; background: rgba(34,197,94,0.1); }
+    .cup.isWrong { border: 2px solid #ffffff; background: rgba(255,255,255,0.2); }
 
     .can {
       width: var(--can-w); height: var(--can-h);
       position: relative; z-index: 10;
       background-color: var(--can-color);
-      /* 优化：简化渐变 */
-      background-image: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.1) 100%);
+      /* ✨ 恢复更明显的金属光泽 */
+      background-image: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.6) 40%, rgba(0,0,0,0.1) 100%);
       border-radius: 4px 4px 6px 6px;
-      box-shadow: 0 2px 3px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
       cursor: pointer;
       transition: transform 0.1s;
     }
     .can.selected {
-      box-shadow: 0 0 0 2px #fff, 0 0 8px var(--safety-yellow);
+      box-shadow: 0 0 0 2px #fff, 0 0 10px var(--safety-yellow);
       transform: scale(1.1); z-index: 20;
     }
     .can::before {
@@ -237,8 +248,7 @@
       position: absolute; inset: 2px;
       background: var(--residue-color);
       border-radius: 50%;
-      /* 稍微降低模糊半径以提升性能 */
-      filter: blur(3px);
+      filter: blur(5px);
       opacity: 0.9;
       z-index: 5;
       transform: scale(0.8); 
@@ -248,7 +258,6 @@
       position: fixed; pointer-events: none !important; z-index: 9999;
       transform: translate(-50%, -50%) scale(1.1); opacity: 0.9;
     }
-    .paletteItem { /* 移除额外的 margin，因为现在由 gap 控制 */ }
     .used .can { opacity: 0.3; filter: grayscale(1); cursor: default; }
 
   </style>
@@ -289,7 +298,7 @@
 
 <script>
 (() => {
-  /* ===== 🎨 颜色池：高对比度优化 + 5个新工业色 ===== */
+  /* ===== 🎨 颜色池 ===== */
   const COLOR_POOL = [
     {name:"深红", hex:"#b91c1c"},   
     {name:"亮橙", hex:"#fb923c"},   
@@ -300,7 +309,7 @@
     {name:"葡萄", hex:"#7e22ce"},
     {name:"荧光粉", hex:"#f472b6"}, 
     {name:"拿铁", hex:"#78350f"},
-    /* --- 新增 5 个高辨识度颜色 (Level 22+) --- */
+    /* 进阶色 */
     {name:"酷黑", hex:"#111827"},   
     {name:"钛银", hex:"#9ca3af"},   
     {name:"荧光绿", hex:"#a3e635"}, 
@@ -308,7 +317,7 @@
     {name:"土豪金", hex:"#ca8a04"}, 
   ];
   
-  const SAVE_KEY = "soda_factory_v15_opt";
+  const SAVE_KEY = "soda_factory_v16_visuals";
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
