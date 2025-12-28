@@ -13,9 +13,9 @@
   
   <style>
     :root{
-      /* 核心尺寸 - 会被JS动态覆盖 */
+      /* 默认值，JS会根据数量动态覆盖 */
       --slot-h: 60px;
-      --slot-gap: 10px;
+      --slot-gap: 14px;
       --can-w: 38px;
       --can-h: 52px;
       
@@ -71,28 +71,28 @@
     }
 
     .wrap{ 
-      width: min(1000px, 99vw); /* 占满宽度 */
-      height: 99vh;             /* 占满高度 */
+      width: min(1000px, 99vw); 
+      height: 99vh; /* 撑满屏幕高度 */
       position:relative; 
       z-index:1; 
       display: flex;
       flex-direction: column;
-      gap: 4px; /* 极小的间距，把空间留给瓶子 */
+      gap: 6px; 
       background: transparent; 
-      padding-top: 4px;
+      padding-top: 6px;
     }
 
-    /* 标题栏 - 紧凑型 */
+    /* 标题栏 */
     .header-bar {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 6px 12px;
+      padding: 8px 16px;
       background: rgba(30, 35, 45, 0.85);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 8px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      flex-shrink: 0; /* 禁止被压缩 */
+      flex-shrink: 0;
     }
     
     h1 { margin:0; font-size: 16px; font-weight: bold; letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
@@ -107,17 +107,17 @@
     .btn:active { transform:translateY(1px); border-bottom-width:1px; }
     #restart { background: linear-gradient(to bottom, #d32f2f, #9a0007); border-color: #ef5350; }
 
-    /* 游戏面板 - 撑满剩余空间 */
+    /* 游戏面板 */
     .game-board {
-      flex: 1; /* 占据所有剩余高度 */
+      flex: 1; /* 自动占满剩余高度 */
       display: grid;
-      grid-template-columns: 1fr 85px; /* 右侧栏稍微窄一点，留给左边 */
+      grid-template-columns: 1fr 90px; 
       gap: 12px;
       overflow: hidden; 
       background: rgba(255, 255, 255, 0.65); 
       border-radius: 12px;
       box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-      padding: 8px; /* 极小的内边距 */
+      padding: 8px;
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
     }
@@ -126,13 +126,13 @@
     .history-viewport {
       display: flex;
       flex-direction: row;
-      gap: 24px;
+      gap: 30px;
       overflow-x: auto;
       overflow-y: hidden;
       align-items: center; 
       justify-content: flex-end; 
       padding: 0 10px;
-      height: 100%; /* 强制填满父容器高度 */
+      height: 100%; /* 撑满父容器 */
       
       background-color: rgba(0,0,0,0.05);
       background-image: repeating-linear-gradient(
@@ -172,7 +172,7 @@
       justify-content: center;
       gap: var(--slot-gap);
       overflow-y: auto;
-      height: 100%; /* 填满高度 */
+      height: 100%; /* 撑满高度 */
       box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
     }
 
@@ -182,8 +182,7 @@
       min-width: calc(var(--can-w) + 10px);
       justify-content: center;
       position: relative;
-      /* 关键：让每列的高度撑满容器，确保上下对齐 */
-      height: 100%; 
+      height: 100%;
     }
     .rowCard.active { z-index: 2; }
     .rowCard.active::before {
@@ -218,7 +217,7 @@
       box-shadow: 0 0 8px rgba(255,255,255,0.6);
     }
 
-    /* 易拉罐 - 样式保持不变 */
+    /* 易拉罐 - 金属质感 */
     .can {
       width: var(--can-w); height: var(--can-h);
       position: relative; z-index: 10;
@@ -329,7 +328,7 @@
     {name:"土豪金", hex:"#ca8a04"}, 
   ];
   
-  const SAVE_KEY = "soda_factory_v30_max_fill";
+  const SAVE_KEY = "soda_factory_v31_perfect_layout";
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
@@ -347,49 +346,55 @@
   let dragGhostEl = null;
   let selectedColorId = null;
 
-  /* ===== 📐 极致空间填充算法 (Greedy Layout) ===== */
+  /* ===== 📐 分段式布局逻辑 ===== */
   function updateLayoutDimensions() {
+    const root = document.documentElement;
+
+    // 🔴 模式 1：数量 < 9，保持原版固定大小
+    if (pairCount < 9) {
+      // 恢复经典的参数
+      root.style.setProperty('--slot-h', '60px');
+      root.style.setProperty('--slot-gap', '14px');
+      root.style.setProperty('--can-h', '52px');
+      root.style.setProperty('--can-w', '38px');
+      
+      // 更新背景条纹 (经典计算)
+      const totalContentH = pairCount * 60 + (pairCount - 1) * 14;
+      document.querySelector('.history-viewport').style.setProperty('--belt-bg-height', `${totalContentH}px`);
+      return; 
+    }
+
+    // 🔴 模式 2：数量 >= 9，贪婪填充模式
     // 1. 获取游戏区域的净高度 (排除 padding)
     const boardEl = document.querySelector('.game-board');
-    // 如果还没渲染出来，就给个兜底值
     const viewportH = boardEl ? boardEl.clientHeight : window.innerHeight * 0.85;
     
-    // 扣除一点上下内边距 (padding-top + padding-bottom + safety)
-    const availableH = viewportH - 20; 
+    // 扣除一点上下内边距
+    const availableH = viewportH - 16; 
     
-    // 2. 动态计算 Gap (间距)
-    // 瓶子少时，间距大(12px)；瓶子多时，间距极小(4px)，优先保瓶子大小
-    let gap = 12;
-    if (pairCount > 6) gap = 8;
-    if (pairCount > 10) gap = 4;
+    // 2. 压缩间距 (Gap)，优先把空间留给瓶子
+    let gap = 4; // 9个以上，间距设为极小的 4px
     
     // 3. 计算每个 Slot 的最大高度
-    // TotalH = (SlotH * Count) + (Gap * (Count - 1))
-    // AvailableH = SlotH * Count + Gap * Count - Gap
-    // SlotH = (AvailableH - Gap * (Count - 1)) / Count
     let slotH = (availableH - (gap * (pairCount - 1))) / pairCount;
     
-    // 4. 限制最大值 (3个瓶子时不要大得离谱)
-    if (slotH > 80) slotH = 80;
-    // 最小值不做硬性限制，但为了视觉效果，最好不小于 32
-    // 在这个算法下，即使14个瓶子，在主流手机上也能分到 ~40px+ 的高度，足够了
+    // 限制最大值 (防止某些极端宽屏下变得太大)
+    if (slotH > 70) slotH = 70;
     
-    // 5. 计算瓶子(Can)的尺寸
-    // 瓶子高度占格子的 90% (留一点边框空隙)
-    const canH = Math.floor(slotH * 0.9);
-    // 瓶子宽度保持比例 (约 0.7)
-    const canW = Math.floor(canH * 0.7); 
+    // 4. 计算瓶子(Can)的尺寸
+    // 瓶子高度占格子的 92% (尽可能填满)
+    const canH = Math.floor(slotH * 0.92);
+    // 瓶子宽度保持比例 (约 0.65)
+    const canW = Math.floor(canH * 0.65); 
     
-    // 6. 应用变量
-    const root = document.documentElement;
+    // 5. 应用变量
     root.style.setProperty('--slot-h', `${slotH}px`);
     root.style.setProperty('--slot-gap', `${gap}px`);
     root.style.setProperty('--can-h', `${canH}px`);
     root.style.setProperty('--can-w', `${canW}px`);
     
-    // 7. 更新背景条纹 (必须精确匹配)
+    // 6. 更新背景条纹 (精确匹配)
     const totalContentH = pairCount * slotH + (pairCount - 1) * gap;
-    // 这里加一点微调，防止背景重复出现误差
     document.querySelector('.history-viewport').style.setProperty('--belt-bg-height', `${totalContentH}px`);
   }
 
@@ -430,7 +435,6 @@
     } catch(e) { return false; }
   }
 
-  /* ✅ Fisher-Yates */
   function shuffle(array) {
     let currentIndex = array.length, randomIndex;
     while (currentIndex != 0) {
@@ -488,7 +492,7 @@
     renderAll();
     if (row.guess.every(v => v !== null)) checkRow(row);
   }
-  
+
   function checkRow(row) {
     const marks = row.guess.map((id, i) => id === correctSeq[i]);
     const allCorrect = marks.every(Boolean);
@@ -496,7 +500,6 @@
     row.status = allCorrect ? "ok" : "bad";
 
     if (!allCorrect) {
-      // ❌ 失败/错误的情况
       row.residue = row.guess.map((id, i) => marks[i] ? null : COLOR_POOL[id].hex);
       
       row.residueSpecs = row.residue.map(() => ({
@@ -505,22 +508,12 @@
       }));
       
       row.failTime = Date.now(); 
-      
-      // ⏰ 延迟 100ms 播放，配合视觉爆炸
-      setTimeout(() => {
-        // 如果这里应该是“爆炸/错误”的声音，请确认这里调用的是对的变量
-        // 如果你觉得反了，把 sfxCorrect 和下面的 sfxPop 换个位置
-        playSound(pop.mp3); 
-      }, 100);
-
+      // ❌ 错误播放 POP
+      playSound(sfxPop);
     } else {
-      // ✅ 成功/正确的情况
-      setTimeout(() => {
-        // 如果这里应该是“通关/正确”的声音
-        playSound(correct.mp3); 
-      }, 100);
+      // ✅ 正确播放 CORRECT
+      playSound(sfxCorrect);
     }
-    
     saveGame();
     renderAll();
     
@@ -743,4 +736,3 @@
 </script>
 </body>
 </html>
-
