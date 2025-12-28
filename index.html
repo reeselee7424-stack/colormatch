@@ -218,6 +218,8 @@
       border: 1px solid rgba(255,255,255,0.15);
       display: flex; justify-content: center; align-items: center; 
       box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+      /* ✅ 核心修改：限制内容在框内 */
+      overflow: hidden;
     }
     .cup.dropHover { 
       background: rgba(255,255,255,0.7); 
@@ -257,41 +259,53 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
     
-    /* 🏷️ Logo：透明背景 + 70% 尺寸 */
+    /* 🏷️ Logo */
     .can-label {
       position: absolute; top: 20%; bottom: 20%; left: 0; right: 0;
-      /* 背景透明，不再有白色方块 */
       background: transparent; 
       z-index: 2;
       background-image: url('xiaoming.png'); 
       background-size: 70%; 
       background-repeat: no-repeat; 
       background-position: center;
-      /* 给 Logo 加一点投影让它浮起来 */
       filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
     }
     
-    /* ⚫ Ink Blot (墨渍/泼溅) 特效 */
+    /* ☁️ 圆润气泡爆炸特效 (CSS Bubbly Cloud) */
     .residue {
       position: absolute;
-      inset: -20px; /* 让墨渍大一点 */
-      background-color: var(--residue-color);
+      /* 让它稍微超出一点点，填满格子 */
+      inset: -10%; 
       z-index: 5;
-      
-      /* 由 JS 动态生成的墨渍形状 */
-      clip-path: var(--ink-shape);
-      
-      /* 混合模式：让墨水看起来渗入背景 */
-      mix-blend-mode: multiply;
-      
-      opacity: 0.9;
-      transform: scale(1);
-      animation: inkSplat 0.2s cubic-bezier(0.1, 0.8, 0.2, 1.5) forwards;
+      /* 主体颜色 */
+      background: var(--residue-color);
+      /* 圆角主体 */
+      border-radius: 50%; 
+      opacity: 1;
+      /* 动画：瞬间膨胀 */
+      animation: puffExpand 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
-    
-    @keyframes inkSplat {
-      0% { transform: scale(0.2) rotate(0deg); opacity: 0.8; }
-      100% { transform: scale(1) rotate(var(--ink-rotate)); opacity: 0.9; }
+
+    /* 利用伪元素和投影制造更多圆形气泡 */
+    .residue::before,
+    .residue::after {
+      content: ''; position: absolute;
+      background: inherit; /* 继承主体颜色 */
+      border-radius: 50%;
+    }
+    .residue::before {
+      width: 80%; height: 80%; top: -10%; left: -20%;
+      box-shadow: 40px 10px 0 var(--residue-color), 
+                  30px 40px 0 var(--residue-color);
+    }
+    .residue::after {
+      width: 70%; height: 70%; bottom: -10%; right: -15%;
+      box-shadow: -30px -20px 0 var(--residue-color);
+    }
+
+    @keyframes puffExpand {
+      0% { transform: scale(0.3); opacity: 0.6; }
+      100% { transform: scale(1.1); opacity: 1; }
     }
 
     .drag-ghost {
@@ -360,7 +374,7 @@
     {name:"土豪金", hex:"#ca8a04"}, 
   ];
   
-  const SAVE_KEY = "soda_factory_v20_inkblot";
+  const SAVE_KEY = "soda_factory_v21_round_blast";
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
@@ -377,22 +391,6 @@
   let draggingColorId = null;
   let dragGhostEl = null;
   let selectedColorId = null;
-
-  /* ===== 💥 生成随机墨渍形状 (Ink Blot Shape) ===== */
-  function generateInkBlot() {
-    const points = [];
-    const steps = 30; // 更多点数，形状更复杂
-    for (let i = 0; i < steps; i++) {
-      const angle = (i / steps) * 2 * Math.PI;
-      // 随机半径波动范围大 (30% - 100%)，模拟液体的流动感
-      const r = 30 + Math.random() * 70; 
-      // 转换到 50% 50% 为中心
-      const x = 50 + Math.cos(angle) * r / 2; 
-      const y = 50 + Math.sin(angle) * r / 2;
-      points.push(`${x.toFixed(1)}% ${y.toFixed(1)}%`);
-    }
-    return `polygon(${points.join(',')})`;
-  }
 
   function updateLayoutMode() {
     const board = document.getElementById('board');
@@ -565,19 +563,13 @@
           };
         }
 
-        // 💥 渲染 Ink Blot
+        // ☁️ 渲染圆润气泡爆炸
         if (row.residue && row.residue[i]) {
           const s = document.createElement("div");
           s.className = "residue";
           s.style.setProperty("--residue-color", row.residue[i]);
-          
-          // 动态生成墨渍形状
-          s.style.setProperty("--ink-shape", generateInkBlot());
-          // 随机旋转
-          s.style.setProperty("--ink-rotate", (Math.random() * 360) + "deg");
-          
           cup.appendChild(s);
-          cup.classList.add("isWrong"); // 白框
+          cup.classList.add("isWrong"); 
         }
 
         const cid = row.guess[i];
