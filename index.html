@@ -367,6 +367,7 @@
   // ✅ 修正1：这里必须全是小写，匹配你现在的文件名 "soda.mp3"
   bgSoda.src = "soda.mp3";
   sfxPop.src = "pop.mp3"; sfxCorrect.src = "correct.mp3";
+  sfxCorrect.volume = 0.3;
   let soundOn = false;
 
   let level = 1;
@@ -716,7 +717,7 @@
 
   const soundBtn = document.getElementById("soundBtn");
   soundBtn.onclick = () => { soundOn = !soundOn;
-    soundBtn.innerText = soundOn ? "🔊" : "🔇"; bgSoda.volume = soundOn ? 0.2 : 0; if (soundOn) bgSoda.play().catch(()=>{}); else bgSoda.pause(); };
+    soundBtn.innerText = soundOn ? "🔊" : "🔇"; bgSoda.volume = soundOn ? 0.5 : 0; if (soundOn) bgSoda.play().catch(()=>{}); else bgSoda.pause(); };
   function playSound(a) { if (soundOn) { a.currentTime=0; a.play().catch(()=>{}); } }
 
   document.getElementById("resetLevel").onclick = () => setupLevel(true);
@@ -732,6 +733,7 @@
 </script>
 </body>
 </html>
+
 
 
 
