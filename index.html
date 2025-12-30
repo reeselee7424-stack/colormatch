@@ -133,6 +133,8 @@
       justify-content: flex-end; 
       padding: 0 10px;
       height: 100%;
+      
+      /* ✅ 移除了原来的大背景，现在轨道由格子自己画 */
       background-color: transparent;
       box-shadow: inset 0 0 30px rgba(0,0,0,0.1);
     }
@@ -163,24 +165,26 @@
       position: relative;
       height: 100%;
     }
+    /* ✅ 移除了 .rowCard.active::before (无发光框) */
 
-    /* 🛤️ 格子即轨道：完美契合 */
+    /* 🛤️ 格子即轨道 (The Slot is the Track) */
     .cup {
       width: calc(var(--can-w) + 8px);
       height: var(--slot-h);
       
-      /* 轨道线绘制 */
+      /* ✅ 这里画出流水线轨道 */
       background: linear-gradient(to bottom, var(--track-bg), rgba(0,0,0,0.02));
       border-top: 3px solid var(--track-border);
-      border-bottom: 3px solid #888;
-      box-sizing: border-box; 
+      border-bottom: 3px solid #888; /* 下边缘稍微亮一点增加立体感 */
+      box-sizing: border-box; /* 确保高度包含边框，对齐无误 */
       
       display: flex; 
       justify-content: center; 
       align-items: center; 
-      overflow: hidden; 
+      overflow: hidden; /* 限制爆炸 */
       box-shadow: none;
     }
+    /* 去除选中发光 */
     
     /* 易拉罐 */
     .can {
@@ -216,9 +220,10 @@
       filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
     }
     
-    /* 💥 SVG 尖锐喷溅 */
+    /* 💥 SVG 尖锐喷溅 (修复消失问题) */
     .residue {
       position: absolute; inset: 12%; z-index: 5;
+      /* ✅ 强制显示，不由 class 控制基础可见性 */
       opacity: 1 !important; 
       pointer-events: none; mix-blend-mode: normal; 
       transform: scale(var(--scale, 1)) rotate(var(--rot, 0deg));
@@ -226,11 +231,15 @@
     .residue svg { 
       width: 100%; height: 100%; 
       fill: var(--residue-color); 
+      /* 默认显示，只有在 .anim-pop 下才从 0 开始 */
       opacity: 1; 
     }
+    
+    /* 仅当是新错误时应用动画 */
     .residue.anim-pop svg { 
       animation: splashAnim 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
     }
+    
     @keyframes splashAnim { 
       0% { transform: scale(0.2); opacity: 0; } 
       100% { transform: scale(1.1); opacity: 1; } 
@@ -243,13 +252,7 @@
     }
     
     .paletteItem { margin-top: 0; }
-    /* ✅ 已使用的样式：灰色，禁止指针事件 */
-    .used .can { 
-      opacity: 0.3; 
-      filter: grayscale(1); 
-      cursor: not-allowed; 
-      pointer-events: none; /* 彻底禁止鼠标交互 */
-    }
+    .used .can { opacity: 0.3; filter: grayscale(1); cursor: default; }
 
   </style>
 </head>
@@ -289,6 +292,7 @@
 
 <script>
 (() => {
+  /* ===== 🎨 颜色池 ===== */
   const COLOR_POOL = [
     {name:"深红", hex:"#b91c1c"},   
     {name:"亮橙", hex:"#fb923c"},   
@@ -299,6 +303,7 @@
     {name:"葡萄", hex:"#7e22ce"},
     {name:"荧光粉", hex:"#f472b6"}, 
     {name:"拿铁", hex:"#78350f"},
+    /* 进阶色 */
     {name:"酷黑", hex:"#111827"},   
     {name:"钛银", hex:"#9ca3af"},   
     {name:"荧光绿", hex:"#a3e635"}, 
@@ -306,16 +311,12 @@
     {name:"土豪金", hex:"#ca8a04"}, 
   ];
   
-  const SAVE_KEY = "soda_factory_v36_final_interactions";
-  
+  const SAVE_KEY = "soda_factory_v34_final_fix";
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
   
-  bgSoda.src = "soda.mp3"; 
-  sfxPop.src = "pop.mp3"; 
-  sfxCorrect.src = "correct.mp3";
-  
+  bgSoda.src = "soda.mp3"; sfxPop.src = "pop.mp3"; sfxCorrect.src = "correct.mp3";
   let soundOn = false;
 
   let level = 1;
@@ -332,6 +333,7 @@
   function updateLayoutDimensions() {
     const root = document.documentElement;
 
+    // 🔴 模式 1：数量 < 9
     if (pairCount < 9) {
       root.style.setProperty('--slot-h', '60px');
       root.style.setProperty('--slot-gap', '14px');
@@ -340,6 +342,7 @@
       return; 
     }
 
+    // 🔴 模式 2：数量 >= 9 (贪婪填充)
     const boardEl = document.querySelector('.game-board');
     const viewportH = boardEl ? boardEl.clientHeight : window.innerHeight * 0.85;
     const availableH = viewportH - 16; 
@@ -502,21 +505,12 @@
     ids.forEach(id => {
       const wrap = document.createElement("div");
       wrap.className = "paletteItem";
-      
-      const isUsed = usedIds.has(id);
-      if (isUsed) wrap.classList.add("used");
-
+      if (usedIds.has(id)) wrap.classList.add("used");
       const canDiv = document.createElement("div");
       canDiv.innerHTML = createCanHTML(id);
       const canEl = canDiv.firstElementChild;
-      
       if (selectedColorId === id) canEl.classList.add("selected");
-      
-      // ✅ 关键修复：只有未使用的瓶子才能交互
-      if (!isUsed) {
-        addInteraction(canEl, id, false); 
-      }
-      
+      addInteraction(canEl, id, false); 
       wrap.appendChild(canEl);
       elPalette.appendChild(wrap);
     });
@@ -535,6 +529,7 @@
         cup.dataset.r = rIdx;
         cup.dataset.c = i;
 
+        // ✅ 去除了点击选中的边框显示，保持干净
         if (isLast) {
           cup.onclick = () => {
             if (selectedColorId !== null) placeColor(rIdx, i, selectedColorId);
@@ -551,6 +546,7 @@
           s.style.setProperty("--scale", spec.scale);
           s.innerHTML = getSplashSVG();
           
+          // ✅ 动画判定逻辑优化
           const isFresh = (Date.now() - (row.failTime || 0)) < 800;
           if (isFresh) s.classList.add("anim-pop");
           else s.classList.add("static");
@@ -608,10 +604,7 @@
       else if (!hasMoved) {
         if (!inGrid) { 
            if (selectedColorId === colorId) selectedColorId = null;
-           else { 
-             selectedColorId = colorId; 
-             // ✅ 这里不播放声音，防止打断背景音乐
-           }
+           else { selectedColorId = colorId; playSound(bgSoda); }
         } else {
            selectedColorId = colorId;
         }
