@@ -5,7 +5,7 @@ const ASSETS = [
   "./manifest.webmanifest",
   "./icon-192.png",
   "./icon-512.png",
-  "./bgm.mp3",
+  "./soda.mp3",
   "./pop.mp3",
   "./correct.mp3",
 ];
@@ -31,6 +31,7 @@ self.addEventListener("fetch", (event) => {
     caches.match(event.request).then((cached) => cached || fetch(event.request))
   );
 });
+
 
 
 
