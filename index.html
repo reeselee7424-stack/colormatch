@@ -364,8 +364,8 @@
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
   
-  // 🟢 [修正] 文件名必须严格区分大小写！根据你的截图，这里改为 Soda.mp3
-  bgSoda.src = "Soda.mp3";
+  // ✅ 修正1：这里必须全是小写，匹配你现在的文件名 "soda.mp3"
+  bgSoda.src = "soda.mp3";
   sfxPop.src = "pop.mp3"; sfxCorrect.src = "correct.mp3";
   let soundOn = false;
 
@@ -382,19 +382,15 @@
   /* ===== 📐 分段式布局逻辑 ===== */
   function updateLayoutDimensions() {
     const root = document.documentElement;
-    // 🔴 模式 1：数量 < 9，保持原版固定大小
     if (pairCount < 9) {
       root.style.setProperty('--slot-h', '60px');
       root.style.setProperty('--slot-gap', '14px');
       root.style.setProperty('--can-h', '52px');
       root.style.setProperty('--can-w', '38px');
-      
       const totalContentH = pairCount * 60 + (pairCount - 1) * 14;
       document.querySelector('.history-viewport').style.setProperty('--belt-bg-height', `${totalContentH}px`);
       return; 
     }
-
-    // 🔴 模式 2：数量 >= 9，贪婪填充模式
     const boardEl = document.querySelector('.game-board');
     const viewportH = boardEl ? boardEl.clientHeight : window.innerHeight * 0.85;
     const availableH = viewportH - 16;
@@ -403,12 +399,10 @@
     if (slotH > 70) slotH = 70;
     const canH = Math.floor(slotH * 0.92);
     const canW = Math.floor(canH * 0.65);
-    
     root.style.setProperty('--slot-h', `${slotH}px`);
     root.style.setProperty('--slot-gap', `${gap}px`);
     root.style.setProperty('--can-h', `${canH}px`);
     root.style.setProperty('--can-w', `${canW}px`);
-    
     const totalContentH = pairCount * slotH + (pairCount - 1) * gap;
     document.querySelector('.history-viewport').style.setProperty('--belt-bg-height', `${totalContentH}px`);
   }
@@ -475,20 +469,16 @@
     if (isNew) {
       const config = getLevelConfig(level);
       pairCount = config.count;
-      
       const currentPool = COLOR_POOL.slice(0, config.poolSize);
       const poolIndices = currentPool.map((_, i) => i);
-      
       ids = shuffle([...poolIndices]).slice(0, pairCount);
       correctSeq = shuffle([...ids]);
-
       attempts = [{
         guess: Array(pairCount).fill(null), status: "active", residue: Array(pairCount).fill(null)
       }];
       activeRowIndex = 0;
       selectedColorId = null;
     }
-    
     setTimeout(updateLayoutDimensions, 0);
     saveGame();
     renderAll();
@@ -525,7 +515,6 @@
     }
     saveGame();
     renderAll();
-    
     if (allCorrect) {
       setTimeout(() => { level++; setupLevel(true); }, 1200);
     } else {
@@ -559,9 +548,8 @@
     ids.forEach(id => {
       const wrap = document.createElement("div");
       wrap.className = "paletteItem";
-      // 判断是否已使用
-      const isUsed = usedIds.has(id);
       
+      const isUsed = usedIds.has(id);
       if (isUsed) wrap.classList.add("used");
       
       const canDiv = document.createElement("div");
@@ -569,7 +557,8 @@
       const canEl = canDiv.firstElementChild;
       if (selectedColorId === id) canEl.classList.add("selected");
       
-      // 🟢 [修正] 只有“未使用”的易拉罐，才允许拖拽/点击
+      // ✅ 修正2：如果已经使用（isUsed为真），就不添加交互事件
+      // 这样你就无法拖拽它，也无法点击它
       if (!isUsed) {
         addInteraction(canEl, id, false); 
       }
@@ -585,13 +574,11 @@
       const isLast = rIdx === activeRowIndex;
       const card = document.createElement("div");
       card.className = "rowCard" + (isLast ? " active" : "");
-      
       for (let i = 0; i < pairCount; i++) {
         const cup = document.createElement("div");
         cup.className = "cup";
         cup.dataset.r = rIdx;
         cup.dataset.c = i;
-
         if (isLast && selectedColorId !== null && row.guess[i] === null) {
           cup.style.outline = "2px dashed var(--safety-yellow)";
           cup.style.background = "rgba(255,255,255,0.5)";
@@ -599,13 +586,11 @@
           cup.style.outline = "";
           cup.style.background = "";
         }
-
         if (isLast) {
           cup.onclick = () => {
             if (selectedColorId !== null) placeColor(rIdx, i, selectedColorId);
           };
         }
-
         if (row.residue && row.residue[i]) {
           const s = document.createElement("div");
           s.className = "residue";
@@ -614,15 +599,12 @@
           s.style.setProperty("--rot", spec.rot + "deg");
           s.style.setProperty("--scale", spec.scale);
           s.innerHTML = getSplashSVG();
-          
           const isFresh = (Date.now() - (row.failTime || 0)) < 800;
           if (isFresh) s.classList.add("anim-pop");
           else s.classList.add("static");
-
           cup.appendChild(s);
           cup.classList.add("isWrong");
         }
-
         const cid = row.guess[i];
         if (cid !== null) {
           const isCorrect = row.marks && row.marks[i];
@@ -631,13 +613,11 @@
             const canWrap = document.createElement("div");
             canWrap.innerHTML = createCanHTML(cid);
             const canEl = canWrap.firstElementChild;
-            
             if (isLast) {
               addInteraction(canEl, cid, true);
             } else {
               canEl.style.cursor = "default";
             }
-            
             cup.appendChild(canEl);
             if (isFinished && isCorrect) cup.classList.add("isCorrect");
           }
@@ -657,7 +637,6 @@
   function addInteraction(el, colorId, inGrid) {
     let startX = 0, startY = 0;
     let hasMoved = false;
-
     const start = (x, y) => {
       startX = x;
       startY = y; hasMoved = false;
@@ -679,7 +658,7 @@
            if (selectedColorId === colorId) selectedColorId = null;
            else { 
              selectedColorId = colorId; 
-             // 这里不播放音乐，避免重置背景音
+             // ✅ 修正3：移除了点击易拉罐时重置音乐的代码
            }
         } else {
            selectedColorId = colorId;
@@ -753,3 +732,4 @@
 </script>
 </body>
 </html>
+
