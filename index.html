@@ -243,13 +243,7 @@
     }
     
     .paletteItem { margin-top: 0; }
-    /* ✅ 已使用的样式：灰色，禁止指针事件 */
-    .used .can { 
-      opacity: 0.3; 
-      filter: grayscale(1); 
-      cursor: not-allowed; 
-      pointer-events: none; /* 彻底禁止鼠标交互 */
-    }
+    .used .can { opacity: 0.3; filter: grayscale(1); cursor: default; }
 
   </style>
 </head>
@@ -289,6 +283,7 @@
 
 <script>
 (() => {
+  /* ===== 🎨 颜色池 ===== */
   const COLOR_POOL = [
     {name:"深红", hex:"#b91c1c"},   
     {name:"亮橙", hex:"#fb923c"},   
@@ -299,6 +294,7 @@
     {name:"葡萄", hex:"#7e22ce"},
     {name:"荧光粉", hex:"#f472b6"}, 
     {name:"拿铁", hex:"#78350f"},
+    /* 进阶色 */
     {name:"酷黑", hex:"#111827"},   
     {name:"钛银", hex:"#9ca3af"},   
     {name:"荧光绿", hex:"#a3e635"}, 
@@ -306,8 +302,9 @@
     {name:"土豪金", hex:"#ca8a04"}, 
   ];
   
-  const SAVE_KEY = "soda_factory_v36_final_interactions";
+  const SAVE_KEY = "soda_factory_v35_audio_fix";
   
+  /* ✅ 音频初始化 (必须与 HTML ID 对应) */
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
@@ -332,6 +329,7 @@
   function updateLayoutDimensions() {
     const root = document.documentElement;
 
+    // 🔴 模式 1：数量 < 9
     if (pairCount < 9) {
       root.style.setProperty('--slot-h', '60px');
       root.style.setProperty('--slot-gap', '14px');
@@ -340,6 +338,7 @@
       return; 
     }
 
+    // 🔴 模式 2：数量 >= 9 (贪婪填充)
     const boardEl = document.querySelector('.game-board');
     const viewportH = boardEl ? boardEl.clientHeight : window.innerHeight * 0.85;
     const availableH = viewportH - 16; 
@@ -451,6 +450,7 @@
     row.status = allCorrect ? "ok" : "bad";
 
     if (!allCorrect) {
+      // ❌ 错误逻辑
       row.residue = row.guess.map((id, i) => marks[i] ? null : COLOR_POOL[id].hex);
       row.residueSpecs = row.residue.map(() => ({
         rot: Math.floor(Math.random() * 360),
@@ -458,10 +458,10 @@
       }));
       row.failTime = Date.now(); 
       
-      // ❌ 错误播放 POP
+      // 播放爆炸/错误音效
       playSound(sfxPop);
     } else {
-      // ✅ 正确播放 CORRECT
+      // ✅ 正确逻辑：播放通关音效
       playSound(sfxCorrect);
     }
     saveGame();
@@ -502,21 +502,12 @@
     ids.forEach(id => {
       const wrap = document.createElement("div");
       wrap.className = "paletteItem";
-      
-      const isUsed = usedIds.has(id);
-      if (isUsed) wrap.classList.add("used");
-
+      if (usedIds.has(id)) wrap.classList.add("used");
       const canDiv = document.createElement("div");
       canDiv.innerHTML = createCanHTML(id);
       const canEl = canDiv.firstElementChild;
-      
       if (selectedColorId === id) canEl.classList.add("selected");
-      
-      // ✅ 关键修复：只有未使用的瓶子才能交互
-      if (!isUsed) {
-        addInteraction(canEl, id, false); 
-      }
-      
+      addInteraction(canEl, id, false); 
       wrap.appendChild(canEl);
       elPalette.appendChild(wrap);
     });
@@ -608,10 +599,7 @@
       else if (!hasMoved) {
         if (!inGrid) { 
            if (selectedColorId === colorId) selectedColorId = null;
-           else { 
-             selectedColorId = colorId; 
-             // ✅ 这里不播放声音，防止打断背景音乐
-           }
+           else { selectedColorId = colorId; playSound(bgSoda); }
         } else {
            selectedColorId = colorId;
         }
