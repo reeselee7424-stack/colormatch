@@ -210,14 +210,11 @@
     @keyframes pulseBorder { 50% { opacity: 0.6; border-color: #fff;
     } }
 
-    /* --- [关键修改] 透明杯子/槽位 --- */
+    /* 透明杯子/槽位 */
     .cup {
       width: calc(var(--can-w) + 8px);
       height: var(--slot-h);
-      
-      /* 新增：确保边框包含在高度内，使其与背景流水线完全对其 */
-      box-sizing: border-box; 
-      
+      box-sizing: border-box; /* 确保高度包含边框，对齐背景 */
       background: rgba(0,0,0,0.15);
       border-radius: 4px;
       position: relative;
@@ -296,7 +293,6 @@
     .drag-ghost {
       position: fixed;
       pointer-events: none !important; z-index: 9999;
-      /* 关键：translate(-50%, -50%) 确保以鼠标为中心 */
       transform: translate(-50%, -50%) scale(1.15) rotate(5deg);
       opacity: 0.95;
       filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4));
@@ -368,7 +364,8 @@
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
   
-  bgSoda.src = "royalty-free村庄清晨小曲.mp3";
+  // 🟢 [修正] 文件名必须严格区分大小写！根据你的截图，这里改为 Soda.mp3
+  bgSoda.src = "Soda.mp3";
   sfxPop.src = "pop.mp3"; sfxCorrect.src = "correct.mp3";
   let soundOn = false;
 
@@ -387,52 +384,40 @@
     const root = document.documentElement;
     // 🔴 模式 1：数量 < 9，保持原版固定大小
     if (pairCount < 9) {
-      // 恢复经典的参数
       root.style.setProperty('--slot-h', '60px');
       root.style.setProperty('--slot-gap', '14px');
       root.style.setProperty('--can-h', '52px');
       root.style.setProperty('--can-w', '38px');
       
-      // 更新背景条纹 (经典计算)
       const totalContentH = pairCount * 60 + (pairCount - 1) * 14;
       document.querySelector('.history-viewport').style.setProperty('--belt-bg-height', `${totalContentH}px`);
       return; 
     }
 
     // 🔴 模式 2：数量 >= 9，贪婪填充模式
-    // 1. 获取游戏区域的净高度 (排除 padding)
     const boardEl = document.querySelector('.game-board');
     const viewportH = boardEl ? boardEl.clientHeight : window.innerHeight * 0.85;
-    // 扣除一点上下内边距
     const availableH = viewportH - 16;
-    // 2. 压缩间距 (Gap)，优先把空间留给瓶子
     let gap = 4;
-    // 9个以上，间距设为极小的 4px
-    
-    // 3. 计算每个 Slot 的最大高度
     let slotH = (availableH - (gap * (pairCount - 1))) / pairCount;
-    // 限制最大值 (防止某些极端宽屏下变得太大)
     if (slotH > 70) slotH = 70;
-    // 4. 计算瓶子(Can)的尺寸
-    // 瓶子高度占格子的 92% (尽可能填满)
     const canH = Math.floor(slotH * 0.92);
-    // 瓶子宽度保持比例 (约 0.65)
     const canW = Math.floor(canH * 0.65);
-    // 5. 应用变量
+    
     root.style.setProperty('--slot-h', `${slotH}px`);
     root.style.setProperty('--slot-gap', `${gap}px`);
     root.style.setProperty('--can-h', `${canH}px`);
     root.style.setProperty('--can-w', `${canW}px`);
-    // 6. 更新背景条纹 (精确匹配)
+    
     const totalContentH = pairCount * slotH + (pairCount - 1) * gap;
     document.querySelector('.history-viewport').style.setProperty('--belt-bg-height', `${totalContentH}px`);
   }
 
-  // 监听窗口大小变化
   window.addEventListener('resize', () => {
     clearTimeout(window.resizeTimer);
     window.resizeTimer = setTimeout(updateLayoutDimensions, 100);
   });
+  
   /* ===== 💥 尖锐喷溅 SVG ===== */
   function getSplashSVG() {
     return `
@@ -504,7 +489,6 @@
       selectedColorId = null;
     }
     
-    // 强制刷新布局
     setTimeout(updateLayoutDimensions, 0);
     saveGame();
     renderAll();
@@ -535,10 +519,8 @@
         scale: 0.9 + Math.random() * 0.3
       }));
       row.failTime = Date.now(); 
-      // ❌ 错误播放 POP
       playSound(sfxPop);
     } else {
-      // ✅ 正确播放 CORRECT
       playSound(sfxCorrect);
     }
     saveGame();
@@ -577,17 +559,23 @@
     ids.forEach(id => {
       const wrap = document.createElement("div");
       wrap.className = "paletteItem";
-      if (usedIds.has(id)) wrap.classList.add("used");
+      // 判断是否已使用
+      const isUsed = usedIds.has(id);
+      
+      if (isUsed) wrap.classList.add("used");
+      
       const canDiv = document.createElement("div");
       canDiv.innerHTML = createCanHTML(id);
       const canEl = canDiv.firstElementChild;
       if (selectedColorId === id) canEl.classList.add("selected");
       
-      addInteraction(canEl, id, false); 
+      // 🟢 [修正] 只有“未使用”的易拉罐，才允许拖拽/点击
+      if (!isUsed) {
+        addInteraction(canEl, id, false); 
+      }
       
       wrap.appendChild(canEl);
       elPalette.appendChild(wrap);
-    
     });
   }
 
@@ -613,7 +601,6 @@
         }
 
         if (isLast) {
-    
           cup.onclick = () => {
             if (selectedColorId !== null) placeColor(rIdx, i, selectedColorId);
           };
@@ -692,8 +679,7 @@
            if (selectedColorId === colorId) selectedColorId = null;
            else { 
              selectedColorId = colorId; 
-             // [关键修改] 移除了这里的 playSound(bgSoda); 
-             // 防止点击易拉罐时重置背景音乐进度
+             // 这里不播放音乐，避免重置背景音
            }
         } else {
            selectedColorId = colorId;
@@ -726,7 +712,6 @@
   function moveGhost(x, y) { 
     if (dragGhostEl) { 
       dragGhostEl.style.left = x + "px";
-      // ✅ 恢复自然拖拽（无偏移）
       dragGhostEl.style.top = y + "px";
     } 
   }
@@ -761,7 +746,6 @@
   if (!loadGame()) setupLevel(true);
   else { 
     renderAll(); 
-    // 加载存档后强制刷新一次布局
     setTimeout(updateLayoutDimensions, 0);
     setTimeout(scrollToEnd, 200); 
   }
@@ -769,5 +753,3 @@
 </script>
 </body>
 </html>
-
-
