@@ -13,16 +13,17 @@
   
   <style>
     :root{
-      /* 默认值，JS会动态覆盖 */
+      /* 默认值，JS会根据数量动态覆盖 */
       --slot-h: 60px;
       --slot-gap: 14px;
       --can-w: 38px;
       --can-h: 52px;
       
       /* 流水线配色 */
+      --belt-dark: #888;
+      --belt-light: #bbb;
+      --belt-border: #666;
       --floor-color: #c0c0c0;
-      --track-border: #555;
-      --track-bg: rgba(0,0,0,0.05);
       --safety-yellow: #e6b800;
     }
 
@@ -36,7 +37,6 @@
       color: #fff;
       overflow:hidden;
       background-color: var(--floor-color);
-      /* 地板纹理 */
       background-image: 
         linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
@@ -48,10 +48,12 @@
 
     /* 🪟 背景窗户 */
     .factory-windows {
-      position: fixed; top: 0; left: 0; right: 0; height: 18vh;
+      position: fixed;
+      top: 0; left: 0; right: 0; height: 18vh;
       background: linear-gradient(to bottom, #2c3e50, #4a5c6e);
       z-index: 0;
-      display: flex; justify-content: space-evenly; align-items: center;
+      display: flex; justify-content: space-evenly;
+      align-items: center;
       padding: 0 20px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.4);
       border-bottom: 6px solid #34495e;
@@ -73,6 +75,7 @@
     .wrap{ 
       width: min(1000px, 99vw); 
       height: 99vh;
+      /* 撑满屏幕高度 */
       position:relative; 
       z-index:1; 
       display: flex;
@@ -84,7 +87,8 @@
 
     /* 标题栏 */
     .header-bar {
-      display: flex; justify-content: space-between; align-items: center;
+      display: flex;
+      justify-content: space-between; align-items: center;
       padding: 8px 16px;
       background: rgba(30, 35, 45, 0.85);
       backdrop-filter: blur(16px);
@@ -95,25 +99,31 @@
       flex-shrink: 0;
     }
     
-    h1 { margin:0; font-size: 16px; font-weight: bold; letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-    .meta { display:flex; gap:12px; font-size:12px; color:#ddd; font-weight: 500; }
+    h1 { margin:0; font-size: 16px; font-weight: bold; letter-spacing: 1px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    .meta { display:flex; gap:12px; font-size:12px; color:#ddd; font-weight: 500;
+    }
     
     .btn {
-      background: linear-gradient(to bottom, #555, #333); color: #fff;
+      background: linear-gradient(to bottom, #555, #333);
+      color: #fff;
       border: 1px solid #666; border-bottom: 2px solid #111;
       padding: 3px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;
       box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
-    .btn:active { transform:translateY(1px); border-bottom-width:1px; }
-    #restart { background: linear-gradient(to bottom, #d32f2f, #9a0007); border-color: #ef5350; }
+    .btn:active { transform:translateY(1px); border-bottom-width:1px;
+    }
+    #restart { background: linear-gradient(to bottom, #d32f2f, #9a0007); border-color: #ef5350;
+    }
 
     /* 游戏面板 */
     .game-board {
       flex: 1;
+      /* 自动占满剩余高度 */
       display: grid;
       grid-template-columns: 1fr 90px; 
       gap: 12px;
-      overflow: hidden; 
+      overflow: hidden;
       background: rgba(255, 255, 255, 0.65); 
       border-radius: 12px;
       box-shadow: 0 10px 40px rgba(0,0,0,0.2);
@@ -133,11 +143,35 @@
       justify-content: flex-end; 
       padding: 0 10px;
       height: 100%;
-      background-color: transparent;
-      box-shadow: inset 0 0 30px rgba(0,0,0,0.1);
+      /* 撑满父容器 */
+      
+      background-color: rgba(0,0,0,0.05);
+      background-image: repeating-linear-gradient(
+        to bottom,
+        var(--belt-border) 0px, 
+        var(--belt-border) 1px,
+        var(--belt-light) 1px, 
+        var(--belt-light) 4px,
+        var(--belt-dark) 4px,
+        var(--belt-dark) var(--slot-h),
+        var(--belt-border) var(--slot-h),
+        var(--belt-border) calc(var(--slot-h) + 1px),
+        transparent calc(var(--slot-h) + 1px), 
+        transparent calc(var(--slot-h) + var(--slot-gap))
+      );
+      
+      background-position: left center;
+      background-repeat: no-repeat;
+      background-size: 200% var(--belt-bg-height, 100%); 
+      border-top: 4px solid #555;
+      border-bottom: 4px solid #555;
+      border-radius: 4px;
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.3);
     }
-    .history-viewport::-webkit-scrollbar { height: 6px; }
-    .history-viewport::-webkit-scrollbar-thumb { background: #666; border-radius: 3px; }
+    .history-viewport::-webkit-scrollbar { height: 6px;
+    }
+    .history-viewport::-webkit-scrollbar-thumb { background: #666; border-radius: 3px;
+    }
 
     /* 右侧货架 */
     .shelf-column {
@@ -151,7 +185,7 @@
       justify-content: center;
       gap: var(--slot-gap);
       overflow-y: auto;
-      height: 100%;
+      height: 100%; /* 撑满高度 */
       box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
     }
 
@@ -163,28 +197,51 @@
       position: relative;
       height: 100%;
     }
+    .rowCard.active { z-index: 2;
+    }
+    .rowCard.active::before {
+      content: ""; position: absolute; inset: -4px -6px;
+      border: 3px dashed var(--safety-yellow);
+      border-radius: 12px;
+      background: rgba(255, 235, 59, 0.1);
+      z-index: -1;
+      animation: pulseBorder 2s infinite;
+    }
+    @keyframes pulseBorder { 50% { opacity: 0.6; border-color: #fff;
+    } }
 
-    /* 🛤️ 格子即轨道：完美契合 */
+    /* --- [关键修改] 透明杯子/槽位 --- */
     .cup {
-      width: calc(var(--can-w) + 14px); /* 稍微宽一点，容纳瓶子 */
+      width: calc(var(--can-w) + 8px);
       height: var(--slot-h);
       
-      /* ✅ 核心修改：让格子本身变成轨道，高度完全一致 */
-      box-sizing: border-box; /* 包含边框 */
-      background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.05));
-      border-top: 3px solid var(--track-border);
-      border-bottom: 3px solid #777;
+      /* 新增：确保边框包含在高度内，使其与背景流水线完全对其 */
+      box-sizing: border-box; 
       
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
-      overflow: hidden; 
-      box-shadow: none;
+      background: rgba(0,0,0,0.15);
+      border-radius: 4px;
+      position: relative;
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex; justify-content: center; align-items: center; 
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+      overflow: hidden;
     }
-    
-    /* 易拉罐 */
+    .cup.dropHover { 
+      background: rgba(255,255,255,0.7); 
+      outline: 2px solid var(--safety-yellow);
+    }
+    .cup.isCorrect { border: 2px solid #22c55e; background: rgba(34,197,94,0.15);
+    }
+    .cup.isWrong { 
+      border: 2px solid #ffffff; 
+      background: rgba(255,255,255,0.2);
+      box-shadow: 0 0 8px rgba(255,255,255,0.6);
+    }
+
+    /* 易拉罐 - 金属质感 */
     .can {
-      width: var(--can-w); height: var(--can-h);
+      width: var(--can-w);
+      height: var(--can-h);
       position: relative; z-index: 10;
       background-color: var(--can-color);
       background-image: linear-gradient(90deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.6) 35%, rgba(255,255,255,0.1) 50%, rgba(0,0,0,0.15) 100%);
@@ -198,52 +255,57 @@
       transform: scale(1.15); z-index: 20;
     }
     .can::before {
-      content: ""; position: absolute; top: -3px; left: 3px; right: 3px; height: 4px;
+      content: ""; position: absolute;
+      top: -3px; left: 3px; right: 3px; height: 4px;
       background: #e5e7eb; border: 1px solid #9ca3af; border-radius: 2px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
     .can::after {
-      content: ""; position: absolute; bottom: -3px; left: 3px; right: 3px; height: 4px;
+      content: ""; position: absolute;
+      bottom: -3px; left: 3px; right: 3px; height: 4px;
       background: linear-gradient(90deg, #6b7280, #d1d5db 50%, #6b7280);
       border-radius: 0 0 4px 4px;
       box-shadow: 0 1px 1px rgba(0,0,0,0.3); z-index: -1;
     }
     .can-label {
-      position: absolute; top: 20%; bottom: 20%; left: 0; right: 0;
+      position: absolute;
+      top: 20%; bottom: 20%; left: 0; right: 0;
       background: transparent; z-index: 2;
       background-image: url('xiaoming.png'); 
       background-size: 85%; background-repeat: no-repeat; background-position: center;
       filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
     }
     
-    /* 💥 SVG 尖锐喷溅 */
+    /* 💥 SVG 尖锐喷溅容器 (固定版) */
     .residue {
-      position: absolute; inset: 12%; z-index: 5;
-      opacity: 1 !important; 
-      pointer-events: none; mix-blend-mode: normal; 
+      position: absolute;
+      inset: 12%; z-index: 5;
+      opacity: 1; pointer-events: none; mix-blend-mode: normal; 
       transform: scale(var(--scale, 1)) rotate(var(--rot, 0deg));
     }
-    .residue svg { 
-      width: 100%; height: 100%; 
-      fill: var(--residue-color); 
-      opacity: 1; 
+    .residue svg { width: 100%; height: 100%; fill: var(--residue-color); opacity: 0;
     }
-    .residue.anim-pop svg { 
-      animation: splashAnim 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+    .residue.anim-pop svg { animation: splashAnim 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
-    @keyframes splashAnim { 
-      0% { transform: scale(0.2); opacity: 0; } 
-      100% { transform: scale(1.1); opacity: 1; } 
+    .residue.static svg { opacity: 1; transform: scale(1.1);
     }
+    @keyframes splashAnim { 0% { transform: scale(0.2); opacity: 0.8; } 100% { transform: scale(1.1); opacity: 1;
+    } }
 
+    /* 拖拽幽灵 - 中心对齐 */
     .drag-ghost {
-      position: fixed; pointer-events: none !important; z-index: 9999;
-      transform: translate(-50%, -50%) scale(1.15) rotate(5deg); opacity: 0.95;
+      position: fixed;
+      pointer-events: none !important; z-index: 9999;
+      /* 关键：translate(-50%, -50%) 确保以鼠标为中心 */
+      transform: translate(-50%, -50%) scale(1.15) rotate(5deg);
+      opacity: 0.95;
       filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4));
     }
     
-    .paletteItem { margin-top: 0; }
-    .used .can { opacity: 0.3; filter: grayscale(1); cursor: default; }
+    .paletteItem { margin-top: 0;
+    }
+    .used .can { opacity: 0.3; filter: grayscale(1); cursor: default;
+    }
 
   </style>
 </head>
@@ -283,6 +345,7 @@
 
 <script>
 (() => {
+  /* ===== 🎨 颜色池 ===== */
   const COLOR_POOL = [
     {name:"深红", hex:"#b91c1c"},   
     {name:"亮橙", hex:"#fb923c"},   
@@ -293,24 +356,20 @@
     {name:"葡萄", hex:"#7e22ce"},
     {name:"荧光粉", hex:"#f472b6"}, 
     {name:"拿铁", hex:"#78350f"},
+    /* 进阶色 */
     {name:"酷黑", hex:"#111827"},   
     {name:"钛银", hex:"#9ca3af"},   
     {name:"荧光绿", hex:"#a3e635"}, 
     {name:"靛蓝", hex:"#312e81"},   
     {name:"土豪金", hex:"#ca8a04"}, 
   ];
-  
-  const SAVE_KEY = "soda_factory_v37_perfect_fit";
-  
-  // ✅ 核心修复：确保音频对象获取正确
+  const SAVE_KEY = "soda_factory_v32_natural_drag";
   const bgSoda = document.getElementById("bg-soda");
   const sfxPop = document.getElementById("sfx-pop");
   const sfxCorrect = document.getElementById("sfx-correct");
   
-  bgSoda.src = "soda.mp3"; 
-  sfxPop.src = "pop.mp3"; 
-  sfxCorrect.src = "correct.mp3";
-  
+  bgSoda.src = "soda.mp3";
+  sfxPop.src = "pop.mp3"; sfxCorrect.src = "correct.mp3";
   let soundOn = false;
 
   let level = 1;
@@ -323,40 +382,58 @@
   let dragGhostEl = null;
   let selectedColorId = null;
 
-  /* ===== 📐 布局逻辑 ===== */
+  /* ===== 📐 分段式布局逻辑 ===== */
   function updateLayoutDimensions() {
     const root = document.documentElement;
-
+    // 🔴 模式 1：数量 < 9，保持原版固定大小
     if (pairCount < 9) {
+      // 恢复经典的参数
       root.style.setProperty('--slot-h', '60px');
       root.style.setProperty('--slot-gap', '14px');
       root.style.setProperty('--can-h', '52px');
       root.style.setProperty('--can-w', '38px');
+      
+      // 更新背景条纹 (经典计算)
+      const totalContentH = pairCount * 60 + (pairCount - 1) * 14;
+      document.querySelector('.history-viewport').style.setProperty('--belt-bg-height', `${totalContentH}px`);
       return; 
     }
 
+    // 🔴 模式 2：数量 >= 9，贪婪填充模式
+    // 1. 获取游戏区域的净高度 (排除 padding)
     const boardEl = document.querySelector('.game-board');
     const viewportH = boardEl ? boardEl.clientHeight : window.innerHeight * 0.85;
-    const availableH = viewportH - 16; 
+    // 扣除一点上下内边距
+    const availableH = viewportH - 16;
+    // 2. 压缩间距 (Gap)，优先把空间留给瓶子
     let gap = 4;
+    // 9个以上，间距设为极小的 4px
+    
+    // 3. 计算每个 Slot 的最大高度
     let slotH = (availableH - (gap * (pairCount - 1))) / pairCount;
+    // 限制最大值 (防止某些极端宽屏下变得太大)
     if (slotH > 70) slotH = 70;
-    
+    // 4. 计算瓶子(Can)的尺寸
+    // 瓶子高度占格子的 92% (尽可能填满)
     const canH = Math.floor(slotH * 0.92);
-    const canW = Math.floor(canH * 0.65); 
-    
+    // 瓶子宽度保持比例 (约 0.65)
+    const canW = Math.floor(canH * 0.65);
+    // 5. 应用变量
     root.style.setProperty('--slot-h', `${slotH}px`);
     root.style.setProperty('--slot-gap', `${gap}px`);
     root.style.setProperty('--can-h', `${canH}px`);
     root.style.setProperty('--can-w', `${canW}px`);
+    // 6. 更新背景条纹 (精确匹配)
+    const totalContentH = pairCount * slotH + (pairCount - 1) * gap;
+    document.querySelector('.history-viewport').style.setProperty('--belt-bg-height', `${totalContentH}px`);
   }
 
+  // 监听窗口大小变化
   window.addEventListener('resize', () => {
     clearTimeout(window.resizeTimer);
     window.resizeTimer = setTimeout(updateLayoutDimensions, 100);
   });
-
-  /* ===== 💥 SVG ===== */
+  /* ===== 💥 尖锐喷溅 SVG ===== */
   function getSplashSVG() {
     return `
       <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -381,10 +458,12 @@
       if (!raw) return false;
       const data = JSON.parse(raw);
       if (!data.attempts || !data.ids) return false;
-      level = data.level; pairCount = data.pairCount; ids = data.ids;
+      level = data.level; pairCount = data.pairCount;
+      ids = data.ids;
       correctSeq = data.correctSeq; attempts = data.attempts; activeRowIndex = data.activeRowIndex;
       return true;
-    } catch(e) { return false; }
+    } catch(e) { return false;
+    }
   }
 
   function shuffle(array) {
@@ -411,17 +490,22 @@
     if (isNew) {
       const config = getLevelConfig(level);
       pairCount = config.count;
+      
       const currentPool = COLOR_POOL.slice(0, config.poolSize);
       const poolIndices = currentPool.map((_, i) => i);
+      
       ids = shuffle([...poolIndices]).slice(0, pairCount);
       correctSeq = shuffle([...ids]);
+
       attempts = [{
         guess: Array(pairCount).fill(null), status: "active", residue: Array(pairCount).fill(null)
       }];
       activeRowIndex = 0;
       selectedColorId = null;
     }
-    setTimeout(updateLayoutDimensions, 0); 
+    
+    // 强制刷新布局
+    setTimeout(updateLayoutDimensions, 0);
     saveGame();
     renderAll();
     setTimeout(scrollToEnd, 100);
@@ -444,15 +528,14 @@
     const allCorrect = marks.every(Boolean);
     row.marks = marks;
     row.status = allCorrect ? "ok" : "bad";
-
     if (!allCorrect) {
-      // ❌ 错误播放 POP
       row.residue = row.guess.map((id, i) => marks[i] ? null : COLOR_POOL[id].hex);
       row.residueSpecs = row.residue.map(() => ({
         rot: Math.floor(Math.random() * 360),
         scale: 0.9 + Math.random() * 0.3
       }));
       row.failTime = Date.now(); 
+      // ❌ 错误播放 POP
       playSound(sfxPop);
     } else {
       // ✅ 正确播放 CORRECT
@@ -478,7 +561,6 @@
 
   const elAttempts = document.getElementById("attempts");
   const elPalette = document.getElementById("palette");
-
   function scrollToEnd() {
     elAttempts.scrollTo({ left: elAttempts.scrollWidth, behavior: 'smooth' });
   }
@@ -492,7 +574,6 @@
     elPalette.innerHTML = "";
     const activeRow = attempts[activeRowIndex];
     const usedIds = new Set(activeRow ? activeRow.guess.filter(x => x !== null) : []);
-
     ids.forEach(id => {
       const wrap = document.createElement("div");
       wrap.className = "paletteItem";
@@ -502,13 +583,11 @@
       const canEl = canDiv.firstElementChild;
       if (selectedColorId === id) canEl.classList.add("selected");
       
-      // 只有没用过的瓶子才能点击
-      if (!usedIds.has(id)) {
-        addInteraction(canEl, id, false); 
-      }
+      addInteraction(canEl, id, false); 
       
       wrap.appendChild(canEl);
       elPalette.appendChild(wrap);
+    
     });
   }
 
@@ -525,7 +604,16 @@
         cup.dataset.r = rIdx;
         cup.dataset.c = i;
 
+        if (isLast && selectedColorId !== null && row.guess[i] === null) {
+          cup.style.outline = "2px dashed var(--safety-yellow)";
+          cup.style.background = "rgba(255,255,255,0.5)";
+        } else {
+          cup.style.outline = "";
+          cup.style.background = "";
+        }
+
         if (isLast) {
+    
           cup.onclick = () => {
             if (selectedColorId !== null) placeColor(rIdx, i, selectedColorId);
           };
@@ -535,7 +623,6 @@
           const s = document.createElement("div");
           s.className = "residue";
           s.style.setProperty("--residue-color", row.residue[i]);
-          
           const spec = (row.residueSpecs && row.residueSpecs[i]) || { rot: 0, scale: 1 };
           s.style.setProperty("--rot", spec.rot + "deg");
           s.style.setProperty("--scale", spec.scale);
@@ -544,8 +631,9 @@
           const isFresh = (Date.now() - (row.failTime || 0)) < 800;
           if (isFresh) s.classList.add("anim-pop");
           else s.classList.add("static");
-          
+
           cup.appendChild(s);
+          cup.classList.add("isWrong");
         }
 
         const cid = row.guess[i];
@@ -556,12 +644,15 @@
             const canWrap = document.createElement("div");
             canWrap.innerHTML = createCanHTML(cid);
             const canEl = canWrap.firstElementChild;
+            
             if (isLast) {
-              addInteraction(canEl, cid, true); 
+              addInteraction(canEl, cid, true);
             } else {
               canEl.style.cursor = "default";
             }
+            
             cup.appendChild(canEl);
+            if (isFinished && isCorrect) cup.classList.add("isCorrect");
           }
         }
         card.appendChild(cup);
@@ -581,7 +672,8 @@
     let hasMoved = false;
 
     const start = (x, y) => {
-      startX = x; startY = y; hasMoved = false;
+      startX = x;
+      startY = y; hasMoved = false;
       draggingColorId = colorId;
       setTimeout(() => { if (hasMoved) createGhost(x, y, colorId); }, 50);
     };
@@ -599,8 +691,9 @@
         if (!inGrid) { 
            if (selectedColorId === colorId) selectedColorId = null;
            else { 
-             // 选中池子里的瓶子（不重置背景音）
              selectedColorId = colorId; 
+             // [关键修改] 移除了这里的 playSound(bgSoda); 
+             // 防止点击易拉罐时重置背景音乐进度
            }
         } else {
            selectedColorId = colorId;
@@ -609,11 +702,9 @@
       }
       removeGhost();
     };
-
     el.addEventListener("touchstart", e => start(e.touches[0].clientX, e.touches[0].clientY), {passive:false});
     el.addEventListener("touchmove", e => { e.preventDefault(); move(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
     el.addEventListener("touchend", e => end(e.changedTouches[0].clientX, e.changedTouches[0].clientY));
-    
     el.addEventListener("mousedown", e => {
       start(e.clientX, e.clientY);
       const onMove = ev => move(ev.clientX, ev.clientY);
@@ -634,11 +725,13 @@
   }
   function moveGhost(x, y) { 
     if (dragGhostEl) { 
-      dragGhostEl.style.left = x + "px"; 
-      dragGhostEl.style.top = y + "px"; 
+      dragGhostEl.style.left = x + "px";
+      // ✅ 恢复自然拖拽（无偏移）
+      dragGhostEl.style.top = y + "px";
     } 
   }
-  function removeGhost() { if (dragGhostEl) { dragGhostEl.remove(); dragGhostEl = null; } draggingColorId = null; clearHighlight(); }
+  function removeGhost() { if (dragGhostEl) { dragGhostEl.remove(); dragGhostEl = null; } draggingColorId = null; clearHighlight();
+  }
 
   function getClosestActiveCup(x, y) {
     const activeCups = Array.from(document.querySelectorAll('.rowCard.active .cup'));
@@ -651,32 +744,24 @@
     });
     return closest;
   }
-  function highlightCup(x, y) { clearHighlight(); const cup = getClosestActiveCup(x, y); if (cup) cup.classList.add("dropHover"); }
+  function highlightCup(x, y) { clearHighlight(); const cup = getClosestActiveCup(x, y); if (cup) cup.classList.add("dropHover");
+  }
   function clearHighlight() { document.querySelectorAll(".dropHover").forEach(e => e.classList.remove("dropHover")); }
-  function dropAt(x, y) { const cup = getClosestActiveCup(x, y); if (cup) placeColor(parseInt(cup.dataset.r), parseInt(cup.dataset.c), draggingColorId); }
+  function dropAt(x, y) { const cup = getClosestActiveCup(x, y);
+    if (cup) placeColor(parseInt(cup.dataset.r), parseInt(cup.dataset.c), draggingColorId); }
 
   const soundBtn = document.getElementById("soundBtn");
-  soundBtn.onclick = () => { 
-    soundOn = !soundOn; 
-    soundBtn.innerText = soundOn ? "🔊" : "🔇"; 
-    bgSoda.volume = soundOn ? 0.2 : 0; 
-    if (soundOn) bgSoda.play().catch(()=>{}); 
-    else bgSoda.pause(); 
-  };
-  
-  function playSound(a) { 
-    if (soundOn) { 
-      a.currentTime = 0; 
-      a.play().catch(()=>{}); 
-    } 
-  }
+  soundBtn.onclick = () => { soundOn = !soundOn;
+    soundBtn.innerText = soundOn ? "🔊" : "🔇"; bgSoda.volume = soundOn ? 0.2 : 0; if (soundOn) bgSoda.play().catch(()=>{}); else bgSoda.pause(); };
+  function playSound(a) { if (soundOn) { a.currentTime=0; a.play().catch(()=>{}); } }
 
   document.getElementById("resetLevel").onclick = () => setupLevel(true);
   document.getElementById("restart").onclick = () => { localStorage.removeItem(SAVE_KEY); level = 1; setupLevel(true); };
 
-  if (!loadGame()) setupLevel(true); 
+  if (!loadGame()) setupLevel(true);
   else { 
     renderAll(); 
+    // 加载存档后强制刷新一次布局
     setTimeout(updateLayoutDimensions, 0);
     setTimeout(scrollToEnd, 200); 
   }
